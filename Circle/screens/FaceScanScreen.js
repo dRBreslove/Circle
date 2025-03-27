@@ -17,6 +17,7 @@ export default function FaceScanScreen({ route, navigation }) {
   const [hasPermission, setHasPermission] = useState(null);
   const [faceDetected, setFaceDetected] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [cameraType, setCameraType] = useState(Camera.Constants.Type.front);
   const cameraRef = useRef(null);
   const peerConnection = useRef(null);
 
@@ -51,14 +52,32 @@ export default function FaceScanScreen({ route, navigation }) {
       }
     };
 
-    // Get local stream
-    const stream = await mediaDevices.getUserMedia({
+    // Get local stream with both cameras
+    const frontStream = await mediaDevices.getUserMedia({
       audio: true,
-      video: true,
+      video: {
+        facingMode: 'user',
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
     });
 
-    stream.getTracks().forEach((track) => {
-      peerConnection.current.addTrack(track, stream);
+    const backStream = await mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+    });
+
+    // Add tracks to peer connection
+    frontStream.getTracks().forEach((track) => {
+      peerConnection.current.addTrack(track, frontStream);
+    });
+
+    backStream.getTracks().forEach((track) => {
+      peerConnection.current.addTrack(track, backStream);
     });
   };
 
@@ -79,9 +98,16 @@ export default function FaceScanScreen({ route, navigation }) {
   };
 
   const generateFaceKey = (faceData) => {
-    // Convert face detection data to a unique key
     const { bounds, rollAngle, yawAngle } = faceData;
     return `${bounds.origin.x}-${bounds.origin.y}-${rollAngle}-${yawAngle}`;
+  };
+
+  const toggleCameraType = () => {
+    setCameraType(
+      cameraType === Camera.Constants.Type.back
+        ? Camera.Constants.Type.front
+        : Camera.Constants.Type.back
+    );
   };
 
   if (hasPermission === null) {
@@ -96,7 +122,7 @@ export default function FaceScanScreen({ route, navigation }) {
       <Camera
         ref={cameraRef}
         style={styles.camera}
-        type={Camera.Constants.Type.front}
+        type={cameraType}
         onFacesDetected={handleFacesDetected}
         faceDetectorSettings={{
           mode: FaceDetector.FaceDetectorMode.fast,
@@ -111,6 +137,14 @@ export default function FaceScanScreen({ route, navigation }) {
           <Text style={styles.instructions}>
             {scanning ? 'Processing...' : 'Position your face in the circle'}
           </Text>
+          <TouchableOpacity
+            style={styles.switchButton}
+            onPress={toggleCameraType}
+          >
+            <Text style={styles.switchButtonText}>
+              Switch Camera
+            </Text>
+          </TouchableOpacity>
         </View>
       </Camera>
     </View>
@@ -146,5 +180,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     padding: 10,
     borderRadius: 5,
+  },
+  switchButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 15,
+    borderRadius: 25,
+  },
+  switchButtonText: {
+    color: '#fff',
+    fontSize: 16,
   },
 }); 
