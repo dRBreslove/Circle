@@ -22,7 +22,7 @@ Circle is a hybrid mobile application that enables secure group communication th
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/circle.git
+git clone https://github.com/dRBreslove/circle.git
 cd circle
 ```
 
