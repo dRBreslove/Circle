@@ -10,6 +10,10 @@ export default function HomeScreen({ navigation }) {
     navigation.navigate('FaceScan', { mode: 'join' });
   };
 
+  const handlePosSys = () => {
+    navigation.navigate('PosSys');
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome to Circle</Text>
@@ -27,6 +31,13 @@ export default function HomeScreen({ navigation }) {
         onPress={handleJoinCircle}
       >
         <Text style={styles.buttonText}>Join Existing Circle</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={[styles.button, styles.posSysButton]}
+        onPress={handlePosSys}
+      >
+        <Text style={styles.buttonText}>Position System</Text>
       </TouchableOpacity>
     </View>
   );
@@ -61,6 +72,9 @@ const styles = StyleSheet.create({
   },
   joinButton: {
     backgroundColor: '#34C759',
+  },
+  posSysButton: {
+    backgroundColor: '#5856D6',
   },
   buttonText: {
     color: 'white',

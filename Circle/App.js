@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import HomeScreen from './screens/HomeScreen';
 import FaceScanScreen from './screens/FaceScanScreen';
 import CircleScreen from './screens/CircleScreen';
+import PosSysScreen from './screens/PosSysScreen';
 
 const Stack = createStackNavigator();
 
@@ -28,6 +29,11 @@ export default function App() {
             name="Circle" 
             component={CircleScreen} 
             options={{ title: 'Your Circle' }}
+          />
+          <Stack.Screen 
+            name="PosSys" 
+            component={PosSysScreen} 
+            options={{ title: 'Position System' }}
           />
         </Stack.Navigator>
       </NavigationContainer>
