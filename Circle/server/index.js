@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const mongoose = require('mongoose');
+require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
@@ -12,11 +13,20 @@ const io = socketIo(server, {
   }
 });
 
-// MongoDB connection
-mongoose.connect('mongodb://localhost:27017/circle', {
+// MongoDB connection with environment variables
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/circle';
+const MONGODB_OPTIONS = {
   useNewUrlParser: true,
-  useUnifiedTopology: true
-});
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+  useFindAndModify: false,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+};
+
+mongoose.connect(MONGODB_URI, MONGODB_OPTIONS)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Circle Schema
 const circleSchema = new mongoose.Schema({

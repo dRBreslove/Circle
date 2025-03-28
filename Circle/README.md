@@ -79,21 +79,27 @@ The Continuom system defines 8 unique positions in 3D space:
 
 ```javascript
 const Continuom = [
-  { id: 0, name: 'Up-North-West', up: true, north: true, west: true },
-  { id: 1, name: 'Up-South-West', up: true, north: false, west: true },
-  { id: 2, name: 'Up-South-East', up: true, north: false, west: false },
-  { id: 3, name: 'Up-North-East', up: true, north: true, west: false },
-  { id: 4, name: 'Down-North-West', up: false, north: true, west: true },
-  { id: 5, name: 'Down-South-East', up: false, north: false, west: false },
-  { id: 6, name: 'Down-South-West', up: false, north: false, west: true },
-  { id: 7, name: 'Down-North-East', up: false, north: true, west: false },
+  // Right side positions
+  { id: 0, name: 'TopFrontRight', cor: { x: 0, y: 0, z: 0 } },
+  { id: 1, name: 'BottomFrontRight', cor: { x: 0, y: 0, z: 0 } },
+  { id: 2, name: 'TopBackRight', cor: { x: 0, y: 0, z: 0 } },
+  { id: 3, name: 'BottomBackRight', cor: { x: 0, y: 0, z: 0 } },
+  
+  // Left side positions
+  { id: 4, name: 'TopFrontLeft', cor: { x: 0, y: 0, z: 0 } },
+  { id: 5, name: 'BottomFrontLeft', cor: { x: 0, y: 0, z: 0 } },
+  { id: 6, name: 'TopBackLeft', cor: { x: 0, y: 0, z: 0 } },
+  { id: 7, name: 'BottomBackLeft', cor: { x: 0, y: 0, z: 0 } }
 ];
-```
 
-Each position is defined by three binary attributes:
-- `up`: Vertical position (true = above ground, false = below ground)
-- `north`: North-South position (true = north, false = south)
-- `west`: East-West position (true = west, false = east)
+Each position is defined by three coordinates within one of two separate xyz coordinate systems:
+- Right side xyz system (ids 0-3)
+- Left side xyz system (ids 4-7)
+
+Within each system, coordinates are defined as:
+- x: 0 for west, 1 for east
+- y: 0 for top, 1 for bottom
+- z: 0 for north, 1 for south
 
 #### Using PosSys
 
@@ -117,13 +123,13 @@ const getMapCoordinates = (position) => {
   if (!deviceLocation) return null;
 
   // Calculate offset based on Continuom position
-  const latOffset = position.north ? 0.0001 : -0.0001;
-  const lngOffset = position.west ? -0.0001 : 0.0001;
+  const latOffset = position.z ? 0.0001 : -0.0001;
+  const lngOffset = position.x ? -0.0001 : 0.0001;
   
   // Use accelerometer data to adjust zoom level
   const baseZoom = 0.0002;
   const zFactor = Math.abs(accelerometerData.z);
-  const zoomLevel = position.up ? baseZoom * (1 + zFactor) : baseZoom * (1 - zFactor);
+  const zoomLevel = position.y ? baseZoom * (1 + zFactor) : baseZoom * (1 - zFactor);
   
   return {
     latitude: deviceLocation.latitude + latOffset,

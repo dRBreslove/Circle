@@ -21,14 +21,17 @@ const { width } = Dimensions.get('window');
 
 // Continuom coordinate system
 const Continuom = [
-  { id: 0, name: 'Up-North-West', up: true, north: true, west: true },
-  { id: 1, name: 'Up-South-West', up: true, north: false, west: true },
-  { id: 2, name: 'Up-South-East', up: true, north: false, west: false },
-  { id: 3, name: 'Up-North-East', up: true, north: true, west: false },
-  { id: 4, name: 'Down-North-West', up: false, north: true, west: true },
-  { id: 5, name: 'Down-South-East', up: false, north: false, west: false },
-  { id: 6, name: 'Down-South-West', up: false, north: false, west: true },
-  { id: 7, name: 'Down-North-East', up: false, north: true, west: false },
+  // Right side positions (relative to device center)
+  { id: 0, name: 'TopFrontRight', cor: { x: 1, y: 0, z: 0 } },  // East, Top, North
+  { id: 1, name: 'BottomFrontRight', cor: { x: 1, y: 1, z: 0 } },  // East, Bottom, North
+  { id: 2, name: 'TopBackRight', cor: { x: 1, y: 0, z: 1 } },  // East, Top, South
+  { id: 3, name: 'BottomBackRight', cor: { x: 1, y: 1, z: 1 } },  // East, Bottom, South
+  
+  // Left side positions (relative to device center)
+  { id: 4, name: 'TopFrontLeft', cor: { x: 0, y: 0, z: 0 } },  // West, Top, North
+  { id: 5, name: 'BottomFrontLeft', cor: { x: 0, y: 1, z: 0 } },  // West, Bottom, North
+  { id: 6, name: 'TopBackLeft', cor: { x: 0, y: 0, z: 1 } },  // West, Top, South
+  { id: 7, name: 'BottomBackLeft', cor: { x: 0, y: 1, z: 1 } }  // West, Bottom, South
 ];
 
 export default function PosSysScreen() {
@@ -126,9 +129,9 @@ export default function PosSysScreen() {
     const pixels = [];
     
     // Calculate base position in the grid
-    const baseX = position.west ? 0 : gridSize / 2;
-    const baseY = position.north ? 0 : gridSize / 2;
-    const baseZ = position.up ? 0 : gridSize / 2;
+    const baseX = position.cor.x ? 0 : gridSize / 2;
+    const baseY = position.cor.y ? 0 : gridSize / 2;
+    const baseZ = position.cor.z ? 0 : gridSize / 2;
     
     // Generate pixel data based on position
     for (let x = 0; x < gridSize; x++) {
@@ -307,6 +310,44 @@ export default function PosSysScreen() {
         type: 'stop_sharing',
         circleId: faceKey
       }));
+    }
+  };
+
+  const getMapCoordinates = (position) => {
+    if (!deviceLocation) return null;
+
+    // Calculate offset based on Continuom position relative to device center
+    const latOffset = position.cor.z ? 0.0001 : -0.0001;  // North/South
+    const lngOffset = position.cor.x ? 0.0001 : -0.0001;  // East/West
+    
+    // Use accelerometer data to adjust zoom level based on vertical position
+    const baseZoom = 0.0002;
+    const zFactor = Math.abs(accelerometerData.z);
+    const zoomLevel = position.cor.y ? baseZoom * (1 + zFactor) : baseZoom * (1 - zFactor);
+    
+    return {
+      latitude: deviceLocation.coords.latitude + latOffset,
+      longitude: deviceLocation.coords.longitude + lngOffset,
+      latitudeDelta: zoomLevel,
+      longitudeDelta: zoomLevel,
+    };
+  };
+
+  const getPositionColor = (position) => {
+    const { cor } = position;
+    const isRightSide = position.cor.x === 1;
+    
+    // Different color schemes for right and left sides
+    if (isRightSide) {
+      const r = 255;  // Red for right side
+      const g = cor.y ? 255 : 0;  // Green for vertical position
+      const b = cor.z ? 255 : 0;  // Blue for north/south
+      return `rgb(${r},${g},${b})`;
+    } else {
+      const r = 0;  // No red for left side
+      const g = cor.y ? 255 : 0;  // Green for vertical position
+      const b = cor.z ? 255 : 0;  // Blue for north/south
+      return `rgb(${r},${g},${b})`;
     }
   };
 
