@@ -306,4 +306,53 @@ Note: WhatsApp must be installed on the device to share videos. The app will pro
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## iOS Development Setup
+
+### Prerequisites
+- Xcode 15.0 or later
+- iOS 17.0+ deployment target
+- Apple Developer account (for signing and distribution)
+
+### Project Structure
+```
+ios/
+└── Circle/
+    ├── Circle.xcodeproj/          # Xcode project file
+    ├── Circle/                    # Main app target
+    │   ├── Sources/              # Swift source files
+    │   ├── Resources/            # Assets and resources
+    │   ├── Info.plist            # App configuration
+    │   └── Circle.entitlements   # App capabilities
+    └── Preview Content/          # SwiftUI preview assets
+```
+
+### Required Capabilities
+The app requires the following iOS capabilities:
+- Camera access for face recognition and video chat
+- Location services for Position System
+- Microphone access for audio chat
+- Network access for WebRTC
+- File system access for video recording
+- Associated domains for deep linking
+
+### Building the App
+1. Open `ios/Circle/Circle.xcodeproj` in Xcode
+2. Select your development team in project settings
+3. Choose a target device or simulator
+4. Build and run the project (⌘R)
+
+### Development Notes
+- The app uses SwiftUI for the user interface
+- Minimum deployment target is iOS 17.0
+- Supports both iPhone and iPad
+- Requires camera and microphone permissions
+- Uses modern Swift concurrency features
+
+### Troubleshooting
+If you encounter build issues:
+1. Clean the build folder (Shift + ⌘K)
+2. Clean build folder and remove derived data
+3. Ensure all required capabilities are enabled
+4. Check signing certificate and provisioning profile
