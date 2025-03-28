@@ -165,6 +165,32 @@ The PosSys positions are also visualized in VR using A-Frame:
 4. Blue pin shows your location
 5. Red pins show other members' locations
 
+### Camera Switching and Display Modes
+
+The Circle app supports two main display modes with different camera configurations:
+
+#### Local Mode
+- Main Display: Shows user's back camera
+- Floating Frame: Shows user's front camera
+- Position: Floating frame appears in top-right corner (120x160 pixels)
+
+#### Remote Mode
+- Main Display: Shows selected member's back camera
+- Floating Frame: Shows selected member's front camera
+- Position: Floating frame appears in top-right corner (120x160 pixels)
+
+#### Switching Between Modes
+1. Tap the "Switch View" button in the floating frame to toggle between local and remote modes
+2. Select a member from the member list to view their cameras
+3. The floating frame maintains its position and size while switching modes
+
+#### Additional Features
+- Real-time video streaming using WebRTC
+- High-quality video (1280x720 resolution)
+- Smooth transitions between modes
+- Member selection through the member list
+- Map toggle for location sharing
+
 ## Security
 
 - Face recognition data is used only for circle authentication
