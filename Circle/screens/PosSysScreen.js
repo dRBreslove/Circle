@@ -47,6 +47,7 @@ export default function PosSysScreen() {
   const [isStreaming, setIsStreaming] = useState(false);
   const wsRef = useRef(null);
   const streamInterval = useRef(null);
+  const [pixelData, setPixelData] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -84,55 +85,78 @@ export default function PosSysScreen() {
   }, []);
 
   useEffect(() => {
-    // Setup WebSocket connection
+    setupWebSocket();
+    return () => {
+      if (wsRef.current) wsRef.current.close();
+      if (streamInterval.current) clearInterval(streamInterval.current);
+    };
+  }, []);
+
+  const setupWebSocket = () => {
     wsRef.current = new WebSocket('ws://localhost:3000');
     
     wsRef.current.onopen = () => {
       console.log('WebSocket connected');
-    };
-    
-    wsRef.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-      if (streamInterval.current) {
-        clearInterval(streamInterval.current);
-      }
-    };
-  }, []);
-
-  // Convert Continuom coordinates to map coordinates
-  const getMapCoordinates = (position) => {
-    if (!deviceLocation) return null;
-
-    // Calculate offset based on Continuom position
-    const latOffset = position.north ? 0.0001 : -0.0001; // Smaller offset for more precise positioning
-    const lngOffset = position.west ? -0.0001 : 0.0001;
-    
-    // Use accelerometer data to adjust zoom level
-    const baseZoom = 0.0002;
-    const zFactor = Math.abs(orientation.z);
-    const zoomLevel = position.up ? baseZoom * (1 + zFactor) : baseZoom * (1 - zFactor);
-    
-    return {
-      latitude: deviceLocation.coords.latitude + latOffset,
-      longitude: deviceLocation.coords.longitude + lngOffset,
-      latitudeDelta: zoomLevel,
-      longitudeDelta: zoomLevel,
+      wsRef.current.send(JSON.stringify({
+        type: 'join_circle',
+        circleId: faceKey
+      }));
     };
   };
 
   const handlePositionSelect = (position) => {
     setSelectedPosition(position);
-    const coordinates = getMapCoordinates(position);
+    // Convert Continuom position to pixel coordinates
+    const pixelCoordinates = convertContinuomToPixels(position);
+    setPixelData(pixelCoordinates);
     
-    if (coordinates) {
-      mapRef.current?.animateToRegion(coordinates, 1000);
+    // Send pixel data to A-Frame scene
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'stream_update',
+        circleId: faceKey,
+        pixelData: pixelCoordinates
+      }));
     }
+  };
+
+  const convertContinuomToPixels = (position) => {
+    const gridSize = 32; // 32x32 grid for A-Frame
+    const pixels = [];
+    
+    // Calculate base position in the grid
+    const baseX = position.west ? 0 : gridSize / 2;
+    const baseY = position.north ? 0 : gridSize / 2;
+    const baseZ = position.up ? 0 : gridSize / 2;
+    
+    // Generate pixel data based on position
+    for (let x = 0; x < gridSize; x++) {
+      for (let y = 0; y < gridSize; y++) {
+        for (let z = 0; z < gridSize; z++) {
+          // Calculate color based on position and distance from center
+          const distanceFromCenter = Math.sqrt(
+            Math.pow(x - gridSize/2, 2) + 
+            Math.pow(y - gridSize/2, 2) + 
+            Math.pow(z - gridSize/2, 2)
+          );
+          
+          // Create color gradient based on position
+          const r = Math.floor((x / gridSize) * 255);
+          const g = Math.floor((y / gridSize) * 255);
+          const b = Math.floor((z / gridSize) * 255);
+          
+          pixels.push({
+            x: x - baseX,
+            y: y - baseY,
+            z: z - baseZ,
+            color: `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`,
+            intensity: 1 - (distanceFromCenter / (gridSize/2))
+          });
+        }
+      }
+    }
+    
+    return pixels;
   };
 
   const handleZoomChange = (event) => {

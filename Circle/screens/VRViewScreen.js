@@ -16,56 +16,43 @@ const VRViewScreen = ({ route }) => {
             <title>Circle VR View</title>
             <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
             <script>
-              AFRAME.registerComponent('pixel-stream', {
+              AFRAME.registerComponent('continuom-pixels', {
                 init: function() {
-                  this.cubes = [];
-                  this.gridSize = 32; // 32x32 grid for performance
-                  this.cubeSize = 0.1;
-                  this.spacing = 0.15;
-                  this.createGrid();
+                  this.pixels = [];
                   this.setupWebSocket();
-                },
-                createGrid: function() {
-                  const scene = this.el;
-                  const totalCubes = this.gridSize * this.gridSize;
-                  
-                  for (let i = 0; i < totalCubes; i++) {
-                    const row = Math.floor(i / this.gridSize);
-                    const col = i % this.gridSize;
-                    
-                    const x = (col - this.gridSize/2) * this.spacing;
-                    const y = (row - this.gridSize/2) * this.spacing;
-                    const z = -5;
-                    
-                    const cube = document.createElement('a-box');
-                    cube.setAttribute('position', \`\${x} \${y} \${z}\`);
-                    cube.setAttribute('width', this.cubeSize);
-                    cube.setAttribute('height', this.cubeSize);
-                    cube.setAttribute('depth', this.cubeSize);
-                    cube.setAttribute('color', '#ffffff');
-                    cube.setAttribute('material', 'opacity: 0.8');
-                    
-                    scene.appendChild(cube);
-                    this.cubes.push(cube);
-                  }
                 },
                 setupWebSocket: function() {
                   const ws = new WebSocket('ws://localhost:3000');
                   
                   ws.onmessage = (event) => {
-                    const pixelData = JSON.parse(event.data);
-                    this.updateCubes(pixelData);
-                  };
-                  
-                  ws.onerror = (error) => {
-                    console.error('WebSocket error:', error);
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'stream_update') {
+                      this.updatePixels(data.pixelData);
+                    }
                   };
                 },
-                updateCubes: function(pixelData) {
-                  pixelData.forEach((pixel, index) => {
-                    if (index < this.cubes.length) {
-                      this.cubes[index].setAttribute('color', pixel.color);
+                updatePixels: function(pixelData) {
+                  // Remove existing pixels
+                  this.pixels.forEach(pixel => {
+                    if (pixel.el) {
+                      pixel.el.parentNode.removeChild(pixel.el);
                     }
+                  });
+                  
+                  this.pixels = [];
+                  
+                  // Create new pixels
+                  pixelData.forEach(pixel => {
+                    const box = document.createElement('a-box');
+                    box.setAttribute('position', \`\${pixel.x} \${pixel.y} \${pixel.z}\`);
+                    box.setAttribute('width', '0.1');
+                    box.setAttribute('height', '0.1');
+                    box.setAttribute('depth', '0.1');
+                    box.setAttribute('color', pixel.color);
+                    box.setAttribute('material', \`opacity: \${pixel.intensity}\`);
+                    
+                    this.el.appendChild(box);
+                    this.pixels.push({ el: box, data: pixel });
                   });
                 }
               });
@@ -77,8 +64,8 @@ const VRViewScreen = ({ route }) => {
               <a-sky color="#ECECEC"></a-sky>
               <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#CCCCCC"></a-plane>
               
-              <!-- Live Pixel Stream -->
-              <a-entity pixel-stream></a-entity>
+              <!-- Continuom Pixels -->
+              <a-entity continuom-pixels></a-entity>
 
               <!-- Camera -->
               <a-entity position="0 1.6 3">
