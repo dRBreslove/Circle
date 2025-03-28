@@ -21,17 +21,57 @@ const { width } = Dimensions.get('window');
 
 // Continuom coordinate system
 const Continuom = [
-  // Right side positions (relative to device center)
-  { id: 0, name: 'TopFrontRight', cor: { x: 1, y: 0, z: 0 } },  // East, Top, North
-  { id: 1, name: 'BottomFrontRight', cor: { x: 1, y: 1, z: 0 } },  // East, Bottom, North
-  { id: 2, name: 'TopBackRight', cor: { x: 1, y: 0, z: 1 } },  // East, Top, South
-  { id: 3, name: 'BottomBackRight', cor: { x: 1, y: 1, z: 1 } },  // East, Bottom, South
+  // Right side positions with perspective scaling
+  { 
+    id: 0, 
+    name: 'TopFrontRight', 
+    cor: { x: 0, y: 0, z: 0 },
+    perspective: { scale: 1, depth: 0 }
+  },
+  { 
+    id: 1, 
+    name: 'BottomFrontRight', 
+    cor: { x: 0, y: 0, z: 0 },
+    perspective: { scale: 1, depth: 0 }
+  },
+  { 
+    id: 2, 
+    name: 'TopBackRight', 
+    cor: { x: 0, y: 0, z: 0 },
+    perspective: { scale: 0.8, depth: 1 }
+  },
+  { 
+    id: 3, 
+    name: 'BottomBackRight', 
+    cor: { x: 0, y: 0, z: 0 },
+    perspective: { scale: 0.8, depth: 1 }
+  },
   
-  // Left side positions (relative to device center)
-  { id: 4, name: 'TopFrontLeft', cor: { x: 0, y: 0, z: 0 } },  // West, Top, North
-  { id: 5, name: 'BottomFrontLeft', cor: { x: 0, y: 1, z: 0 } },  // West, Bottom, North
-  { id: 6, name: 'TopBackLeft', cor: { x: 0, y: 0, z: 1 } },  // West, Top, South
-  { id: 7, name: 'BottomBackLeft', cor: { x: 0, y: 1, z: 1 } }  // West, Bottom, South
+  // Left side positions with perspective scaling
+  { 
+    id: 4, 
+    name: 'TopFrontLeft', 
+    cor: { x: 0, y: 0, z: 0 },
+    perspective: { scale: 1, depth: 0 }
+  },
+  { 
+    id: 5, 
+    name: 'BottomFrontLeft', 
+    cor: { x: 0, y: 0, z: 0 },
+    perspective: { scale: 1, depth: 0 }
+  },
+  { 
+    id: 6, 
+    name: 'TopBackLeft', 
+    cor: { x: 0, y: 0, z: 0 },
+    perspective: { scale: 0.8, depth: 1 }
+  },
+  { 
+    id: 7, 
+    name: 'BottomBackLeft', 
+    cor: { x: 0, y: 0, z: 0 },
+    perspective: { scale: 0.8, depth: 1 }
+  }
 ];
 
 export default function PosSysScreen() {
@@ -316,14 +356,20 @@ export default function PosSysScreen() {
   const getMapCoordinates = (position) => {
     if (!deviceLocation) return null;
 
-    // Calculate offset based on Continuom position relative to device center
-    const latOffset = position.cor.z ? 0.0001 : -0.0001;  // North/South
-    const lngOffset = position.cor.x ? 0.0001 : -0.0001;  // East/West
+    // Calculate base offset based on Continuom position
+    const latOffset = position.z ? 0.0001 : -0.0001;
+    const lngOffset = position.x ? -0.0001 : 0.0001;
     
-    // Use accelerometer data to adjust zoom level based on vertical position
+    // Apply perspective scaling
     const baseZoom = 0.0002;
     const zFactor = Math.abs(accelerometerData.z);
-    const zoomLevel = position.cor.y ? baseZoom * (1 + zFactor) : baseZoom * (1 - zFactor);
+    const perspectiveScale = position.perspective.scale;
+    const depthFactor = position.perspective.depth;
+    
+    // Calculate zoom level with perspective
+    const zoomLevel = position.y 
+      ? baseZoom * (1 + zFactor) * perspectiveScale * (1 + depthFactor * 0.2)
+      : baseZoom * (1 - zFactor) * perspectiveScale * (1 + depthFactor * 0.2);
     
     return {
       latitude: deviceLocation.coords.latitude + latOffset,
@@ -349,6 +395,54 @@ export default function PosSysScreen() {
       const b = cor.z ? 255 : 0;  // Blue for north/south
       return `rgb(${r},${g},${b})`;
     }
+  };
+
+  const renderGrid = () => {
+    return Continuom.map((pos) => {
+      const coords = getMapCoordinates(pos);
+      if (!coords) return null;
+
+      return (
+        <View key={pos.id} style={styles.gridContainer}>
+          <Marker
+            coordinate={{
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+            }}
+            style={[
+              styles.gridMarker,
+              {
+                transform: [
+                  { scale: pos.perspective.scale },
+                  { translateY: pos.perspective.depth * 10 }
+                ]
+              }
+            ]}
+          >
+            <View style={styles.gridContent}>
+              <Text style={styles.gridText}>{pos.name}</Text>
+              <View style={styles.gridLines}>
+                {/* Render perspective grid lines */}
+                {[...Array(3)].map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.gridLine,
+                      {
+                        transform: [
+                          { scale: 1 - (i * 0.2) },
+                          { translateY: i * 5 }
+                        ]
+                      }
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
+          </Marker>
+        </View>
+      );
+    });
   };
 
   if (hasPermission === null) {
@@ -436,20 +530,7 @@ export default function PosSysScreen() {
           showsUserLocation={true}
           showsMyLocationButton={true}
         >
-          {Continuom.map((pos) => {
-            const coordinates = getMapCoordinates(pos);
-            if (!coordinates) return null;
-            
-            return (
-              <Marker
-                key={pos.id}
-                coordinate={coordinates}
-                title={pos.name}
-                pinColor={selectedPosition?.id === pos.id ? '#007AFF' : '#FF3B30'}
-                onPress={() => handlePositionSelect(pos)}
-              />
-            );
-          })}
+          {renderGrid()}
         </MapView>
       </View>
 
@@ -620,5 +701,43 @@ const styles = StyleSheet.create({
   },
   sharingButton: {
     backgroundColor: '#f44336',
+  },
+  gridContainer: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gridMarker: {
+    width: 100,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gridContent: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gridText: {
+    color: '#fff',
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+  gridLines: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+  },
+  gridLine: {
+    position: 'absolute',
+    width: '100%',
+    height: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    top: '50%',
+    left: 0,
   },
 }); 

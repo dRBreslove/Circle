@@ -42,12 +42,12 @@ const VRViewScreen = ({ route }) => {
                   const memberPixels = [];
                   pixelData.forEach(pixel => {
                     const box = document.createElement('a-box');
-                    box.setAttribute('position', \`\${pixel.x} \${pixel.y} \${pixel.z}\`);
+                    box.setAttribute('position', pixel.x + ' ' + pixel.y + ' ' + pixel.z);
                     box.setAttribute('width', '0.1');
                     box.setAttribute('height', '0.1');
                     box.setAttribute('depth', '0.1');
                     box.setAttribute('color', pixel.color);
-                    box.setAttribute('material', \`opacity: \${pixel.intensity}\`);
+                    box.setAttribute('material', 'opacity: ' + pixel.intensity);
                     
                     // Add hover effect
                     box.addEventListener('mouseenter', function() {
@@ -98,6 +98,112 @@ const VRViewScreen = ({ route }) => {
     generateVRScene();
   }, []);
 
+  const getPositionColor = (position) => {
+    // Return color based on position
+    const colors = {
+      'TopFrontRight': '#FF0000',
+      'BottomFrontRight': '#FF3333',
+      'TopBackRight': '#FF6666',
+      'BottomBackRight': '#FF9999',
+      'TopFrontLeft': '#0000FF',
+      'BottomFrontLeft': '#3333FF',
+      'TopBackLeft': '#6666FF',
+      'BottomBackLeft': '#9999FF'
+    };
+    return colors[position.name] || '#FFFFFF';
+  };
+
+  const createGridEntity = (position, memberId) => {
+    const gridSize = 32;
+    const baseScale = position.perspective.scale;
+    const depthFactor = position.perspective.depth;
+    
+    return {
+      id: 'grid-' + memberId + '-' + position.id,
+      primitive: 'box',
+      width: gridSize,
+      height: gridSize,
+      depth: gridSize,
+      position: {
+        x: position.cor.x * gridSize * baseScale * (1 + depthFactor * 0.2),
+        y: position.cor.y * gridSize * baseScale * (1 + depthFactor * 0.2),
+        z: position.cor.z * gridSize * baseScale * (1 + depthFactor * 0.2)
+      },
+      scale: {
+        x: baseScale * (1 - depthFactor * 0.1),
+        y: baseScale * (1 - depthFactor * 0.1),
+        z: baseScale * (1 - depthFactor * 0.1)
+      },
+      color: getPositionColor(position),
+      opacity: 0.8,
+      animation: {
+        property: 'scale',
+        from: baseScale * 0.8,
+        to: baseScale * 1.2,
+        dur: 2000,
+        dir: 'alternate',
+        loop: true
+      }
+    };
+  };
+
+  const createGridLines = (position, memberId) => {
+    const gridSize = 32;
+    const baseScale = position.perspective.scale;
+    const depthFactor = position.perspective.depth;
+    const lines = [];
+    
+    // Create perspective grid lines
+    for (let i = 0; i < 3; i++) {
+      const scale = baseScale * (1 - (i * 0.2)) * (1 - depthFactor * 0.1);
+      const offset = i * 5;
+      
+      lines.push({
+        id: 'grid-line-' + memberId + '-' + position.id + '-' + i,
+        primitive: 'box',
+        width: gridSize * scale,
+        height: 0.5,
+        depth: 0.5,
+        position: {
+          x: position.cor.x * gridSize * scale,
+          y: position.cor.y * gridSize * scale + offset,
+          z: position.cor.z * gridSize * scale
+        },
+        color: '#ffffff',
+        opacity: 0.3 * (1 - i * 0.2)
+      });
+    }
+    
+    return lines;
+  };
+
+  const updateVRScene = (sharedPositions) => {
+    const scene = document.querySelector('a-scene');
+    if (!scene) return;
+
+    // Clear existing entities
+    const existingEntities = scene.querySelectorAll('[id^="grid-"]');
+    existingEntities.forEach(entity => entity.remove());
+
+    // Add new grid entities
+    sharedPositions.forEach((position, memberId) => {
+      const gridEntity = createGridEntity(position, memberId);
+      const gridLines = createGridLines(position, memberId);
+      
+      // Add grid entity
+      const entity = document.createElement('a-entity');
+      Object.assign(entity, gridEntity);
+      scene.appendChild(entity);
+      
+      // Add grid lines
+      gridLines.forEach(line => {
+        const lineEntity = document.createElement('a-entity');
+        Object.assign(lineEntity, line);
+        scene.appendChild(lineEntity);
+      });
+    });
+  };
+
   return (
     <View style={styles.container}>
       <WebView
@@ -125,4 +231,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default VRViewScreen; 
+export default VRViewScreen;
