@@ -103,14 +103,17 @@ The PosSys feature implements a unique 3D coordinate system called Continuom, wh
 
 #### Continuom Coordinate System
 
-The Continuom system defines 8 unique positions in 3D space with perspective-based scaling:
+The Continuom system defines 8 unique positions in 3D space with perspective-based scaling, centered around the Heart. Each position name follows the pattern [Side][Front/Back][Up/Down], where:
+- Side is either Left (L) or Right (R)
+- Front/Back indicates position relative to the Heart
+- Up/Down indicates vertical position relative to the Heart
 
 ```javascript
 const Continuom = [
   // Right side positions with perspective scaling
   { 
     id: 0, 
-    name: 'TopFrontRight', 
+    name: 'RightFrontUp', 
     cor: { x: 0, y: 0, z: 0 },
     perspective: { scale: 1, depth: 0 }
   },
@@ -120,11 +123,79 @@ const Continuom = [
 
 Each position is defined by:
 - `id`: Unique identifier (0-7)
-- `name`: Descriptive name (e.g., "TopFrontRight")
-- `cor`: Continuom coordinates (x, y, z)
+- `name`: Descriptive name following [Side][Front/Back][Up/Down] pattern
+- `cor`: Continuom coordinates (x, y, z) relative to the Heart
 - `perspective`: Scaling and depth information
   - `scale`: Base scaling factor (1 for front, 0.8 for back)
   - `depth`: Depth factor (0 for front, 1 for back)
+
+```
+    Front View (Scale: 1.0)        Back View (Scale: 0.8)
+    ┌─────────┐                    ┌─────────┐
+    │  RFU    │                    │  RBU    │
+    │  (0)    │                    │  (2)    │
+    ├─────────┤                    ├─────────┤
+    │  RFD    │                    │  RBD    │
+    │  (1)    │                    │  (3)    │
+    └─────────┘                    └─────────┘
+
+    Left View (Scale: 0.9)         Right View (Scale: 0.9)
+    ┌─────────┐                    ┌─────────┐
+    │  LFU    │                    │  RFU    │
+    │  (4)    │                    │  (0)    │
+    ├─────────┤                    ├─────────┤
+    │  LFD    │                    │  RFD    │
+    │  (5)    │                    │  (1)    │
+    └─────────┘                    └─────────┘
+
+    Top View (Scale: 1.0)          Bottom View (Scale: 0.8)
+    ┌─────────┐                    ┌─────────┐
+    │  RFU    │                    │  RFD    │
+    │  (0)    │                    │  (1)    │
+    ├─────────┤                    ├─────────┤
+    │  LFU    │                    │  LFD    │
+    │  (4)    │                    │  (5)    │
+    └─────────┘                    └─────────┘
+
+Legend:
+- RFU: Right Front Up (0)
+- RFD: Right Front Down (1)
+- RBU: Right Back Up (2)
+- RBD: Right Back Down (3)
+- LFU: Left Front Up (4)
+- LFD: Left Front Down (5)
+- LBU: Left Back Up (6)
+- LBD: Left Back Down (7)
+
+Position Naming Convention:
+- First letter: Side (L/R)
+  - L = Left
+  - R = Right
+- Second letter: Front/Back (F/B)
+  - F = Front (towards Heart)
+  - B = Back (away from Heart)
+- Third letter: Up/Down (U/D)
+  - U = Up
+  - D = Down
+
+Perspective Scaling:
+- Front positions: 1.0 scale
+- Back positions: 0.8 scale
+- Side positions: 0.9 scale
+- Depth factor increases from front (0) to back (1)
+```
+
+The diagram above shows the 8 positions in the Continuom coordinate system:
+1. Right Front Up (RFU)
+2. Right Front Down (RFD)
+3. Right Back Up (RBU)
+4. Right Back Down (RBD)
+5. Left Front Up (LFU)
+6. Left Front Down (LFD)
+7. Left Back Up (LBU)
+8. Left Back Down (LBD)
+
+Each position is color-coded and labeled for easy identification. The perspective scaling is visually represented by the size and depth of each position in the diagram.
 
 #### QubPix Visualization
 
