@@ -7,6 +7,7 @@ import HomeScreen from './screens/HomeScreen';
 import FaceScanScreen from './screens/FaceScanScreen';
 import CircleScreen from './screens/CircleScreen';
 import PosSysScreen from './screens/PosSysScreen';
+import VRViewScreen from './screens/VRViewScreen';
 
 const Stack = createStackNavigator();
 
@@ -34,6 +35,11 @@ export default function App() {
             name="PosSys" 
             component={PosSysScreen} 
             options={{ title: 'Position System' }}
+          />
+          <Stack.Screen 
+            name="VRView" 
+            component={VRViewScreen} 
+            options={{ title: 'VR View' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

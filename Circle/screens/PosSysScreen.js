@@ -6,10 +6,16 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
+  ScrollView,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import { Accelerometer } from 'expo-sensors';
+import { useNavigation } from '@react-navigation/native';
+import { Camera } from 'expo-camera';
+import * as Location from 'expo-location';
+import * as Device from 'expo-device';
+import { WebSocket } from 'react-native-websocket';
 
 const { width } = Dimensions.get('window');
 
@@ -26,36 +32,75 @@ const Continuom = [
 ];
 
 export default function PosSysScreen() {
+  const navigation = useNavigation();
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [deviceLocation, setDeviceLocation] = useState(null);
   const [accelerometerData, setAccelerometerData] = useState({ x: 0, y: 0, z: 0 });
+  const [orientation, setOrientation] = useState({ x: 0, y: 0, z: 0 });
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [cameraPoints, setCameraPoints] = useState([]);
+  const [isFrontCamera, setIsFrontCamera] = useState(true);
   const mapRef = useRef(null);
   const subscription = useRef(null);
+  const [hasPermission, setHasPermission] = useState(null);
+  const cameraRef = useRef(null);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const wsRef = useRef(null);
+  const streamInterval = useRef(null);
 
   useEffect(() => {
-    // Get initial device location
-    Geolocation.getCurrentPosition(
-      (position) => {
-        setDeviceLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
+
+  useEffect(() => {
+    let subscription;
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.error('Location permission not granted');
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({});
+        setDeviceLocation(location);
+
+        subscription = Accelerometer.addListener(accelerometerData => {
+          setOrientation(accelerometerData);
         });
-      },
-      (error) => Alert.alert('Error', error.message),
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
-    );
-
-    // Start accelerometer subscription
-    subscription.current = Accelerometer.addListener(data => {
-      setAccelerometerData(data);
-    });
-
-    // Set accelerometer update interval
-    Accelerometer.setUpdateInterval(1000);
+      } catch (error) {
+        console.error('Error getting location:', error);
+      }
+    })();
 
     return () => {
-      if (subscription.current) {
-        subscription.current.remove();
+      if (subscription) {
+        subscription.remove();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    // Setup WebSocket connection
+    wsRef.current = new WebSocket('ws://localhost:3000');
+    
+    wsRef.current.onopen = () => {
+      console.log('WebSocket connected');
+    };
+    
+    wsRef.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+      if (streamInterval.current) {
+        clearInterval(streamInterval.current);
       }
     };
   }, []);
@@ -70,12 +115,12 @@ export default function PosSysScreen() {
     
     // Use accelerometer data to adjust zoom level
     const baseZoom = 0.0002;
-    const zFactor = Math.abs(accelerometerData.z);
+    const zFactor = Math.abs(orientation.z);
     const zoomLevel = position.up ? baseZoom * (1 + zFactor) : baseZoom * (1 - zFactor);
     
     return {
-      latitude: deviceLocation.latitude + latOffset,
-      longitude: deviceLocation.longitude + lngOffset,
+      latitude: deviceLocation.coords.latitude + latOffset,
+      longitude: deviceLocation.coords.longitude + lngOffset,
       latitudeDelta: zoomLevel,
       longitudeDelta: zoomLevel,
     };
@@ -90,72 +135,228 @@ export default function PosSysScreen() {
     }
   };
 
-  if (!deviceLocation) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Getting your location...</Text>
-      </View>
-    );
+  const handleZoomChange = (event) => {
+    setZoomLevel(event.zoom);
+  };
+
+  const startStreaming = async () => {
+    if (!cameraRef.current || isStreaming) return;
+    
+    setIsStreaming(true);
+    const gridSize = 32; // 32x32 grid for performance
+    
+    streamInterval.current = setInterval(async () => {
+      try {
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 0.1,
+          base64: true,
+          exif: true,
+        });
+
+        const image = new Image();
+        image.src = `data:image/jpeg;base64,${photo.base64}`;
+        
+        image.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = gridSize;
+          canvas.height = gridSize;
+          
+          // Draw and scale image to match grid size
+          ctx.drawImage(image, 0, 0, gridSize, gridSize);
+          
+          // Sample pixels
+          const pixelData = [];
+          const imageData = ctx.getImageData(0, 0, gridSize, gridSize);
+          
+          for (let i = 0; i < imageData.data.length; i += 4) {
+            pixelData.push({
+              color: `#${[imageData.data[i], imageData.data[i+1], imageData.data[i+2]]
+                .map(x => x.toString(16).padStart(2, '0'))
+                .join('')}`
+            });
+          }
+          
+          // Send pixel data through WebSocket
+          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify(pixelData));
+          }
+        };
+      } catch (error) {
+        console.error('Error capturing camera data:', error);
+      }
+    }, 100); // Stream every 100ms
+  };
+
+  const stopStreaming = () => {
+    if (streamInterval.current) {
+      clearInterval(streamInterval.current);
+      streamInterval.current = null;
+    }
+    setIsStreaming(false);
+  };
+
+  const addCameraPoint = async () => {
+    if (cameraRef.current) {
+      try {
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 0.1, // Lower quality for better performance
+          base64: true,
+          exif: true,
+        });
+
+        // Process the image to get pixel data
+        const image = new Image();
+        image.src = `data:image/jpeg;base64,${photo.base64}`;
+        
+        image.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = image.width;
+          canvas.height = image.height;
+          ctx.drawImage(image, 0, 0);
+          
+          // Sample pixels (every 10th pixel for performance)
+          const pixelData = [];
+          const sampleRate = 10;
+          
+          for (let y = 0; y < canvas.height; y += sampleRate) {
+            for (let x = 0; x < canvas.width; x += sampleRate) {
+              const pixel = ctx.getImageData(x, y, 1, 1).data;
+              pixelData.push({
+                x: (x - canvas.width/2) / 100, // Scale down for VR
+                y: (y - canvas.height/2) / 100,
+                z: -5,
+                color: `#${[pixel[0], pixel[1], pixel[2]].map(x => x.toString(16).padStart(2, '0')).join('')}`,
+                isFrontCamera,
+                timestamp: Date.now()
+              });
+            }
+          }
+          
+          setCameraPoints([...cameraPoints, ...pixelData]);
+        };
+      } catch (error) {
+        console.error('Error capturing camera data:', error);
+      }
+    }
+  };
+
+  const toggleCamera = () => {
+    setIsFrontCamera(!isFrontCamera);
+  };
+
+  const viewInVR = () => {
+    navigation.navigate('VRView', {
+      deviceLocation,
+      orientation,
+      zoomLevel,
+      cameraPoints
+    });
+  };
+
+  if (hasPermission === null) {
+    return <View />;
+  }
+  if (hasPermission === false) {
+    return <Text>No access to camera</Text>;
   }
 
   return (
-    <View style={styles.container}>
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        initialRegion={{
-          latitude: deviceLocation.latitude,
-          longitude: deviceLocation.longitude,
-          latitudeDelta: 0.0002,
-          longitudeDelta: 0.0002,
-        }}
-        showsUserLocation={true}
-        showsMyLocationButton={true}
-      >
-        {Continuom.map((pos) => {
-          const coordinates = getMapCoordinates(pos);
-          if (!coordinates) return null;
-          
-          return (
-            <Marker
-              key={pos.id}
-              coordinate={coordinates}
-              title={pos.name}
-              pinColor={selectedPosition?.id === pos.id ? '#007AFF' : '#FF3B30'}
-              onPress={() => handlePositionSelect(pos)}
-            />
-          );
-        })}
-      </MapView>
-
-      <View style={styles.controlPanel}>
-        <Text style={styles.title}>PosSys Continuom</Text>
-        <View style={styles.accelerometerInfo}>
-          <Text style={styles.accelerometerText}>
-            Device Orientation: {Math.round(accelerometerData.z * 100)}%
+    <ScrollView style={styles.container}>
+      <View style={styles.section}>
+        <Text style={styles.title}>Position System</Text>
+        
+        <View style={styles.infoContainer}>
+          <Text style={styles.label}>Device Location:</Text>
+          <Text style={styles.value}>
+            {deviceLocation ? 
+              `Lat: ${deviceLocation.coords.latitude.toFixed(6)}, 
+               Long: ${deviceLocation.coords.longitude.toFixed(6)}` : 
+              'Loading...'}
           </Text>
         </View>
-        <View style={styles.grid}>
-          {Continuom.map((pos) => (
-            <TouchableOpacity
-              key={pos.id}
-              style={[
-                styles.positionButton,
-                selectedPosition?.id === pos.id && styles.selectedButton,
-              ]}
-              onPress={() => handlePositionSelect(pos)}
-            >
-              <Text style={[
-                styles.buttonText,
-                selectedPosition?.id === pos.id && styles.selectedButtonText,
-              ]}>
-                {pos.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
+
+        <View style={styles.infoContainer}>
+          <Text style={styles.label}>Device Orientation:</Text>
+          <Text style={styles.value}>
+            X: {orientation.x.toFixed(2)}, 
+            Y: {orientation.y.toFixed(2)}, 
+            Z: {orientation.z.toFixed(2)}
+          </Text>
+        </View>
+
+        <View style={styles.infoContainer}>
+          <Text style={styles.label}>Zoom Level:</Text>
+          <Text style={styles.value}>{zoomLevel.toFixed(2)}x</Text>
+        </View>
+
+        <View style={styles.infoContainer}>
+          <Text style={styles.label}>Camera Points:</Text>
+          <Text style={styles.value}>{cameraPoints.length} points recorded</Text>
         </View>
       </View>
-    </View>
+
+      <View style={styles.controls}>
+        <TouchableOpacity 
+          style={[styles.button, isStreaming ? styles.stopButton : styles.startButton]} 
+          onPress={isStreaming ? stopStreaming : startStreaming}
+        >
+          <Text style={styles.buttonText}>
+            {isStreaming ? 'Stop Streaming' : 'Start Streaming'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={toggleCamera}>
+          <Text style={styles.buttonText}>
+            Switch to {isFrontCamera ? 'Back' : 'Front'} Camera
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.button, styles.vrButton]} onPress={viewInVR}>
+          <Text style={styles.buttonText}>View in VR</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.cameraContainer}>
+        <Camera
+          ref={cameraRef}
+          style={styles.camera}
+          type={isFrontCamera ? Camera.Constants.Type.front : Camera.Constants.Type.back}
+          onZoomChanged={handleZoomChange}
+        />
+      </View>
+
+      <View style={styles.mapContainer}>
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          initialRegion={{
+            latitude: deviceLocation?.coords.latitude || 0,
+            longitude: deviceLocation?.coords.longitude || 0,
+            latitudeDelta: 0.0002,
+            longitudeDelta: 0.0002,
+          }}
+          showsUserLocation={true}
+          showsMyLocationButton={true}
+        >
+          {Continuom.map((pos) => {
+            const coordinates = getMapCoordinates(pos);
+            if (!coordinates) return null;
+            
+            return (
+              <Marker
+                key={pos.id}
+                coordinate={coordinates}
+                title={pos.name}
+                pinColor={selectedPosition?.id === pos.id ? '#007AFF' : '#FF3B30'}
+                onPress={() => handlePositionSelect(pos)}
+              />
+            );
+          })}
+        </MapView>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -164,76 +365,80 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+  section: {
+    padding: 20,
+    backgroundColor: '#fff',
+    marginBottom: 20,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  loadingText: {
-    fontSize: 18,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+  },
+  infoContainer: {
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
     color: '#666',
+    marginBottom: 5,
+  },
+  value: {
+    fontSize: 14,
+    color: '#333',
+  },
+  controls: {
+    padding: 20,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 8,
+    minWidth: 150,
+    alignItems: 'center',
+  },
+  vrButton: {
+    backgroundColor: '#4CAF50',
+    width: '100%',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cameraContainer: {
+    height: 300,
+    margin: 20,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  camera: {
+    flex: 1,
+  },
+  mapContainer: {
+    flex: 1,
+    width: '100%',
   },
   map: {
     flex: 1,
     width: '100%',
   },
-  controlPanel: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  startButton: {
+    backgroundColor: '#4CAF50',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
-  },
-  accelerometerInfo: {
-    backgroundColor: '#f0f0f0',
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 15,
-  },
-  accelerometerText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  positionButton: {
-    width: '48%',
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  selectedButton: {
-    backgroundColor: '#007AFF',
-  },
-  buttonText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  selectedButtonText: {
-    color: '#fff',
+  stopButton: {
+    backgroundColor: '#f44336',
   },
 }); 

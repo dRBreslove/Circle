@@ -27,62 +27,51 @@ const circleSchema = new mongoose.Schema({
 
 const Circle = mongoose.model('Circle', circleSchema);
 
-// WebRTC signaling
+const circles = new Map(); // Store circle members and their WebSocket connections
+
 io.on('connection', (socket) => {
-  console.log('New client connected');
+  console.log('Client connected');
 
-  socket.on('join-circle', async (data) => {
-    const { faceKey } = data;
-    try {
-      let circle = await Circle.findOne({ faceKey });
-      if (!circle) {
-        circle = await Circle.create({
-          faceKey,
-          members: [socket.id]
-        });
-      } else {
-        circle.members.push(socket.id);
-        await circle.save();
-      }
-      socket.join(faceKey);
-      io.to(faceKey).emit('member-joined', { memberId: socket.id });
-    } catch (error) {
-      console.error('Error joining circle:', error);
+  socket.on('join_circle', (data) => {
+    const { circleId } = data;
+    
+    // Add member to circle
+    if (!circles.has(circleId)) {
+      circles.set(circleId, new Set());
     }
+    circles.get(circleId).add(socket.id);
+    
+    // Notify other members
+    socket.to(circleId).emit('member_joined', { memberId: socket.id });
+    
+    // Join socket room
+    socket.join(circleId);
   });
 
-  socket.on('offer', (data) => {
-    io.to(data.target).emit('offer', {
-      offer: data.offer,
-      from: socket.id
+  socket.on('stream_update', (data) => {
+    const { circleId, cameraType, pixelData } = data;
+    
+    // Broadcast to all other members in the circle
+    socket.to(circleId).emit('member_stream', {
+      memberId: socket.id,
+      cameraType,
+      pixelData
     });
   });
 
-  socket.on('answer', (data) => {
-    io.to(data.target).emit('answer', {
-      answer: data.answer,
-      from: socket.id
-    });
-  });
-
-  socket.on('ice-candidate', (data) => {
-    io.to(data.target).emit('ice-candidate', {
-      candidate: data.candidate,
-      from: socket.id
-    });
-  });
-
-  socket.on('disconnect', async () => {
-    try {
-      const circles = await Circle.find({ members: socket.id });
-      for (const circle of circles) {
-        circle.members = circle.members.filter(id => id !== socket.id);
-        await circle.save();
-        io.to(circle.faceKey).emit('member-left', { memberId: socket.id });
+  socket.on('disconnect', () => {
+    // Remove member from all circles
+    circles.forEach((members, circleId) => {
+      if (members.has(socket.id)) {
+        members.delete(socket.id);
+        io.to(circleId).emit('member_left', { memberId: socket.id });
+        
+        // Clean up empty circles
+        if (members.size === 0) {
+          circles.delete(circleId);
+        }
       }
-    } catch (error) {
-      console.error('Error handling disconnect:', error);
-    }
+    });
   });
 });
 
