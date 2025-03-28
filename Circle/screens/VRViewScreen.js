@@ -3,7 +3,7 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 const VRViewScreen = ({ route }) => {
-  const { deviceLocation, orientation, zoomLevel } = route.params;
+  const { deviceLocation, orientation, zoomLevel, cameraPoints } = route.params;
   const [vrScene, setVrScene] = useState('');
   const webViewRef = useRef(null);
 
@@ -16,9 +16,9 @@ const VRViewScreen = ({ route }) => {
             <title>Circle VR View</title>
             <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
             <script>
-              AFRAME.registerComponent('continuom-pixels', {
+              AFRAME.registerComponent('qubpix', {
                 init: function() {
-                  this.pixels = new Map(); // Store pixels by memberId
+                  this.pixels = new Map(); // Store pixels by position
                   this.setupWebSocket();
                 },
                 setupWebSocket: function() {
@@ -27,49 +27,66 @@ const VRViewScreen = ({ route }) => {
                   ws.onmessage = (event) => {
                     const data = JSON.parse(event.data);
                     
-                    if (data.type === 'possys_shared') {
-                      this.updateMemberPixels(data.memberId, data.pixelData);
-                    } else if (data.type === 'possys_stopped') {
-                      this.removeMemberPixels(data.memberId);
+                    if (data.type === 'stream_update') {
+                      this.updatePositionPixels(data.pixelData);
+                    } else if (data.type === 'stop_sharing') {
+                      this.removePositionPixels(data.positionId);
                     }
                   };
                 },
-                updateMemberPixels: function(memberId, pixelData) {
-                  // Remove existing pixels for this member
-                  this.removeMemberPixels(memberId);
-                  
-                  // Create new pixels
-                  const memberPixels = [];
+                updatePositionPixels: function(pixelData) {
+                  // Group pixels by position
+                  const positionPixels = new Map();
                   pixelData.forEach(pixel => {
+                    const posId = pixel.position.id;
+                    if (!positionPixels.has(posId)) {
+                      positionPixels.set(posId, []);
+                    }
+                    positionPixels.get(posId).push(pixel);
+                  });
+
+                  // Update each position's pixels
+                  positionPixels.forEach((pixels, posId) => {
+                    this.updatePosition(posId, pixels);
+                  });
+                },
+                updatePosition: function(positionId, pixels) {
+                  // Remove existing pixels for this position
+                  this.removePositionPixels(positionId);
+                  
+                  // Create new QubPix
+                  const positionPixels = [];
+                  pixels.forEach(pixel => {
                     const box = document.createElement('a-box');
-                    box.setAttribute('position', pixel.x + ' ' + pixel.y + ' ' + pixel.z);
+                    box.setAttribute('position', \`\${pixel.x} \${pixel.y} \${pixel.z}\`);
                     box.setAttribute('width', '0.1');
                     box.setAttribute('height', '0.1');
                     box.setAttribute('depth', '0.1');
+                    box.setAttribute('scale', \`\${pixel.scale} \${pixel.scale} \${pixel.scale}\`);
                     box.setAttribute('color', pixel.color);
-                    box.setAttribute('material', 'opacity: ' + pixel.intensity);
+                    box.setAttribute('material', \`opacity: \${pixel.intensity}\`);
                     
                     // Add hover effect
                     box.addEventListener('mouseenter', function() {
-                      this.setAttribute('scale', '1.2 1.2 1.2');
+                      this.setAttribute('scale', \`\${pixel.scale * 1.2} \${pixel.scale * 1.2} \${pixel.scale * 1.2}\`);
                     });
                     box.addEventListener('mouseleave', function() {
-                      this.setAttribute('scale', '1 1 1');
+                      this.setAttribute('scale', \`\${pixel.scale} \${pixel.scale} \${pixel.scale}\`);
                     });
                     
                     this.el.appendChild(box);
-                    memberPixels.push(box);
+                    positionPixels.push(box);
                   });
                   
-                  this.pixels.set(memberId, memberPixels);
+                  this.pixels.set(positionId, positionPixels);
                 },
-                removeMemberPixels: function(memberId) {
-                  const memberPixels = this.pixels.get(memberId);
-                  if (memberPixels) {
-                    memberPixels.forEach(pixel => {
+                removePositionPixels: function(positionId) {
+                  const positionPixels = this.pixels.get(positionId);
+                  if (positionPixels) {
+                    positionPixels.forEach(pixel => {
                       pixel.parentNode.removeChild(pixel);
                     });
-                    this.pixels.delete(memberId);
+                    this.pixels.delete(positionId);
                   }
                 }
               });
@@ -81,8 +98,8 @@ const VRViewScreen = ({ route }) => {
               <a-sky color="#ECECEC"></a-sky>
               <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" color="#CCCCCC"></a-plane>
               
-              <!-- Continuom Pixels -->
-              <a-entity continuom-pixels></a-entity>
+              <!-- QubPix -->
+              <a-entity qubpix></a-entity>
 
               <!-- Camera -->
               <a-entity position="0 1.6 3">

@@ -13,7 +13,8 @@ Circle is a hybrid mobile application that enables secure group communication th
 - Position System (PosSys) with Continuom coordinate system
 - Live location sharing
 - Device orientation-based positioning
-- VR visualization of shared positions
+- VR visualization with QubPix
+- Screen recording and video capture
 
 ## Prerequisites
 
@@ -85,7 +86,7 @@ The application uses environment variables for configuration. Create a `.env` fi
   - `FaceScanScreen.js` - Face recognition and circle joining screen
   - `CircleScreen.js` - Group chat interface with video, audio, and text
   - `PosSysScreen.js` - Position System with Continuom coordinate system
-  - `VRViewScreen.js` - VR visualization of shared positions
+  - `VRViewScreen.js` - VR visualization with QubPix
 
 ## Usage
 
@@ -102,31 +103,50 @@ The PosSys feature implements a unique 3D coordinate system called Continuom, wh
 
 #### Continuom Coordinate System
 
-The Continuom system defines 8 unique positions in 3D space:
+The Continuom system defines 8 unique positions in 3D space with perspective-based scaling:
 
 ```javascript
 const Continuom = [
-  // Right side positions
-  { id: 0, name: 'TopFrontRight', cor: { x: 0, y: 0, z: 0 } },
-  { id: 1, name: 'BottomFrontRight', cor: { x: 0, y: 0, z: 0 } },
-  { id: 2, name: 'TopBackRight', cor: { x: 0, y: 0, z: 0 } },
-  { id: 3, name: 'BottomBackRight', cor: { x: 0, y: 0, z: 0 } },
-  
-  // Left side positions
-  { id: 4, name: 'TopFrontLeft', cor: { x: 0, y: 0, z: 0 } },
-  { id: 5, name: 'BottomFrontLeft', cor: { x: 0, y: 0, z: 0 } },
-  { id: 6, name: 'TopBackLeft', cor: { x: 0, y: 0, z: 0 } },
-  { id: 7, name: 'BottomBackLeft', cor: { x: 0, y: 0, z: 0 } }
+  // Right side positions with perspective scaling
+  { 
+    id: 0, 
+    name: 'TopFrontRight', 
+    cor: { x: 0, y: 0, z: 0 },
+    perspective: { scale: 1, depth: 0 }
+  },
+  // ... other positions
 ];
+```
 
-Each position is defined by three coordinates within one of two separate xyz coordinate systems:
-- Right side xyz system (ids 0-3)
-- Left side xyz system (ids 4-7)
+Each position is defined by:
+- `id`: Unique identifier (0-7)
+- `name`: Descriptive name (e.g., "TopFrontRight")
+- `cor`: Continuom coordinates (x, y, z)
+- `perspective`: Scaling and depth information
+  - `scale`: Base scaling factor (1 for front, 0.8 for back)
+  - `depth`: Depth factor (0 for front, 1 for back)
 
-Within each system, coordinates are defined as:
-- x: 0 for west, 1 for east
-- y: 0 for top, 1 for bottom
-- z: 0 for north, 1 for south
+#### QubPix Visualization
+
+The Continuom positions are visualized in VR using QubPix (colored cubes):
+
+1. Each position generates a 32x32x32 grid of QubPix
+2. QubPix properties:
+   - Color: Based on position and coordinates
+   - Scale: Affected by perspective and depth
+   - Intensity: Varies with distance from center
+   - Position: Mapped to 3D space with perspective scaling
+
+3. Interactive features:
+   - Hover effects scale up QubPix by 20%
+   - Smooth transitions for all animations
+   - Real-time updates through WebSocket
+
+4. Perspective effects:
+   - Front positions appear larger and closer
+   - Back positions appear smaller and further away
+   - Grid lines create depth perception
+   - Color intensity varies with distance
 
 #### Using PosSys
 
@@ -145,37 +165,47 @@ Within each system, coordinates are defined as:
 #### Position Mapping Example
 
 ```javascript
-// Convert Continuom coordinates to map coordinates
-const getMapCoordinates = (position) => {
-  if (!deviceLocation) return null;
-
-  // Calculate offset based on Continuom position
-  const latOffset = position.z ? 0.0001 : -0.0001;
-  const lngOffset = position.x ? -0.0001 : 0.0001;
+// Convert Continuom coordinates to QubPix
+const convertContinuomToPixels = (position) => {
+  const gridSize = 32;
+  const pixels = [];
   
-  // Use accelerometer data to adjust zoom level
-  const baseZoom = 0.0002;
-  const zFactor = Math.abs(accelerometerData.z);
-  const zoomLevel = position.y ? baseZoom * (1 + zFactor) : baseZoom * (1 - zFactor);
+  // Calculate base position and perspective scaling
+  const baseX = position.cor.x ? 0 : gridSize / 2;
+  const baseY = position.cor.y ? 0 : gridSize / 2;
+  const baseZ = position.cor.z ? 0 : gridSize / 2;
+  const perspectiveScale = position.perspective.scale;
+  const depthFactor = position.perspective.depth;
   
-  return {
-    latitude: deviceLocation.latitude + latOffset,
-    longitude: deviceLocation.longitude + lngOffset,
-    latitudeDelta: zoomLevel,
-    longitudeDelta: zoomLevel,
-  };
+  // Generate QubPix with color and position
+  for (let x = 0; x < gridSize; x++) {
+    for (let y = 0; y < gridSize; y++) {
+      for (let z = 0; z < gridSize; z++) {
+        pixels.push({
+          x: (x - baseX) * perspectiveScale * (1 - depthFactor * 0.1),
+          y: (y - baseY) * perspectiveScale * (1 - depthFactor * 0.1),
+          z: (z - baseZ) * perspectiveScale * (1 - depthFactor * 0.1),
+          color: calculateColor(x, y, z),
+          intensity: calculateIntensity(x, y, z),
+          scale: perspectiveScale * (1 - depthFactor * 0.1)
+        });
+      }
+    }
+  }
+  
+  return pixels;
 };
 ```
 
 #### VR Visualization
 
-The PosSys positions are also visualized in VR using A-Frame:
+The PosSys positions are visualized in VR using A-Frame:
 
-1. Each position is represented as a 32x32x32 grid of colored pixels
-2. Pixels are positioned in 3D space based on their Continuom coordinates
+1. Each position is represented as a grid of QubPix
+2. QubPix are positioned in 3D space based on their Continuom coordinates
 3. Color and intensity are calculated based on position and distance from center
 4. Real-time updates when positions change
-5. Interactive hover effects on pixels
+5. Interactive hover effects on QubPix
 
 #### Sharing Positions
 
@@ -217,6 +247,17 @@ The Circle app supports two main display modes with different camera configurati
 - Smooth transitions between modes
 - Member selection through the member list
 - Map toggle for location sharing
+
+### Screen Recording
+
+The app includes screen recording functionality:
+
+1. Tap the "Start Recording" button to begin recording
+2. Recording duration is displayed in MM:SS format
+3. Visual indicator shows recording status
+4. Recordings are saved to the device's gallery
+5. Maximum recording duration: 1 hour
+6. Quality: 720p
 
 ## Security
 

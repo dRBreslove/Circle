@@ -7,6 +7,7 @@ import {
   Dimensions,
   Alert,
   ScrollView,
+  Platform,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
@@ -15,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Camera } from 'expo-camera';
 import * as Location from 'expo-location';
 import * as Device from 'expo-device';
+import * as FileSystem from 'expo-file-system';
 import { WebSocket } from 'react-native-websocket';
 
 const { width } = Dimensions.get('window');
@@ -92,6 +94,10 @@ export default function PosSysScreen() {
   const streamInterval = useRef(null);
   const [pixelData, setPixelData] = useState([]);
   const [isSharing, setIsSharing] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const recordingTimer = useRef(null);
+  const recordingStartTime = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -173,28 +179,44 @@ export default function PosSysScreen() {
     const baseY = position.cor.y ? 0 : gridSize / 2;
     const baseZ = position.cor.z ? 0 : gridSize / 2;
     
-    // Generate pixel data based on position
+    // Apply perspective scaling
+    const perspectiveScale = position.perspective.scale;
+    const depthFactor = position.perspective.depth;
+    
+    // Generate QubPix data based on position
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
-          // Calculate color based on position and distance from center
+          // Calculate distance from center for intensity
           const distanceFromCenter = Math.sqrt(
             Math.pow(x - gridSize/2, 2) + 
             Math.pow(y - gridSize/2, 2) + 
             Math.pow(z - gridSize/2, 2)
           );
           
-          // Create color gradient based on position
+          // Calculate color based on position and Continuom coordinates
           const r = Math.floor((x / gridSize) * 255);
           const g = Math.floor((y / gridSize) * 255);
           const b = Math.floor((z / gridSize) * 255);
           
+          // Apply perspective scaling to position
+          const scaledX = (x - baseX) * perspectiveScale * (1 - depthFactor * 0.1);
+          const scaledY = (y - baseY) * perspectiveScale * (1 - depthFactor * 0.1);
+          const scaledZ = (z - baseZ) * perspectiveScale * (1 - depthFactor * 0.1);
+          
+          // Create QubPix with color and position
           pixels.push({
-            x: x - baseX,
-            y: y - baseY,
-            z: z - baseZ,
+            x: scaledX,
+            y: scaledY,
+            z: scaledZ,
             color: `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`,
-            intensity: 1 - (distanceFromCenter / (gridSize/2))
+            intensity: 1 - (distanceFromCenter / (gridSize/2)),
+            scale: perspectiveScale * (1 - depthFactor * 0.1),
+            position: {
+              id: position.id,
+              name: position.name,
+              cor: position.cor
+            }
           });
         }
       }
@@ -445,6 +467,58 @@ export default function PosSysScreen() {
     });
   };
 
+  const startRecording = async () => {
+    if (!cameraRef.current || isRecording) return;
+
+    try {
+      setIsRecording(true);
+      recordingStartTime.current = Date.now();
+      
+      // Start recording timer
+      recordingTimer.current = setInterval(() => {
+        const duration = Math.floor((Date.now() - recordingStartTime.current) / 1000);
+        setRecordingDuration(duration);
+      }, 1000);
+
+      // Start camera recording
+      await cameraRef.current.recordAsync({
+        quality: Camera.Constants.VideoQuality['720p'],
+        maxDuration: 3600, // 1 hour max
+        skipProcessing: true,
+      });
+
+      Alert.alert(
+        'Recording Saved',
+        'Video has been saved to your device\'s gallery',
+        [{ text: 'OK' }]
+      );
+
+      stopRecording();
+    } catch (error) {
+      console.error('Error recording video:', error);
+      Alert.alert('Error', 'Failed to record video');
+      stopRecording();
+    }
+  };
+
+  const stopRecording = () => {
+    if (cameraRef.current && isRecording) {
+      cameraRef.current.stopRecording();
+      setIsRecording(false);
+      if (recordingTimer.current) {
+        clearInterval(recordingTimer.current);
+        recordingTimer.current = null;
+      }
+      setRecordingDuration(0);
+    }
+  };
+
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   if (hasPermission === null) {
     return <View />;
   }
@@ -506,6 +580,18 @@ export default function PosSysScreen() {
         <TouchableOpacity style={[styles.button, styles.vrButton]} onPress={viewInVR}>
           <Text style={styles.buttonText}>View in VR</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[
+            styles.button, 
+            isRecording ? styles.recordingButton : styles.recordButton
+          ]} 
+          onPress={isRecording ? stopRecording : startRecording}
+        >
+          <Text style={styles.buttonText}>
+            {isRecording ? `Stop Recording (${formatDuration(recordingDuration)})` : 'Start Recording'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.cameraContainer}>
@@ -514,7 +600,14 @@ export default function PosSysScreen() {
           style={styles.camera}
           type={isFrontCamera ? Camera.Constants.Type.front : Camera.Constants.Type.back}
           onZoomChanged={handleZoomChange}
-        />
+        >
+          {isRecording && (
+            <View style={styles.recordingIndicator}>
+              <View style={styles.recordingDot} />
+              <Text style={styles.recordingText}>{formatDuration(recordingDuration)}</Text>
+            </View>
+          )}
+        </Camera>
       </View>
 
       <View style={styles.mapContainer}>
@@ -739,5 +832,33 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
     top: '50%',
     left: 0,
+  },
+  recordButton: {
+    backgroundColor: '#4CAF50',
+  },
+  recordingButton: {
+    backgroundColor: '#f44336',
+  },
+  recordingIndicator: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 10,
+    borderRadius: 5,
+  },
+  recordingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#f44336',
+    marginRight: 5,
+  },
+  recordingText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 }); 
