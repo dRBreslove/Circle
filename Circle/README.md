@@ -35,20 +35,47 @@ cd circle
 npm install
 ```
 
-3. Start MongoDB:
+3. Configure environment variables:
+   Create a `.env` file in the root directory with the following content:
+   ```bash
+   MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/circle?retryWrites=true&w=majority
+   ```
+   Replace the placeholders:
+   - `<username>`: Your MongoDB username
+   - `<password>`: Your MongoDB password
+   - `<cluster>`: Your MongoDB cluster address
+
+4. Start MongoDB:
 ```bash
 mongod
 ```
 
-4. Start the server:
+5. Start the server:
 ```bash
 npm run dev
 ```
 
-5. Start the mobile app:
+6. Start the mobile app:
 ```bash
 npm run mobile
 ```
+
+### Environment Variables
+
+The application uses environment variables for configuration. Create a `.env` file in the root directory with the following variables:
+
+#### MongoDB Configuration
+- `MONGODB_URI`: MongoDB connection string
+  - Format: `mongodb+srv://<username>:<password>@<cluster>.mongodb.net/circle?retryWrites=true&w=majority`
+  - Required for database connection
+  - Supports MongoDB Atlas and self-hosted MongoDB
+  - Includes retry writes and write concern options
+
+#### Security Notes
+- Never commit the `.env` file to version control
+- Keep your database credentials secure
+- Use different credentials for development and production
+- The `.env` file is included in `.gitignore` by default
 
 ## Project Structure
 
