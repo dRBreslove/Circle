@@ -25,11 +25,11 @@ import { WebSocket } from 'react-native-websocket';
 const socket = io('http://localhost:3000');
 const { width } = Dimensions.get('window');
 
-export default function CircleScreen({ route }) {
+export default function CircleScreen({ route, navigation }) {
   const { faceKey } = route.params;
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
-  const [remoteStreams, setRemoteStreams] = useState([]);
+  const [remoteStreams, setRemoteStreams] = useState({});
   const [localStreams, setLocalStreams] = useState({ front: null, back: null });
   const [activeCamera, setActiveCamera] = useState('front');
   const [showMap, setShowMap] = useState(false);
@@ -50,6 +50,10 @@ export default function CircleScreen({ route }) {
   const [backCameraStream, setBackCameraStream] = useState(null);
   const [peerFrontCameraStreams, setPeerFrontCameraStreams] = useState({});
   const [peerBackCameraStreams, setPeerBackCameraStreams] = useState({});
+  const [displayMode, setDisplayMode] = useState('local'); // 'local', 'remote', 'continuom'
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [cameraType, setCameraType] = useState('back'); // 'front' or 'back'
+  const [localStream, setLocalStream] = useState(null);
 
   useEffect(() => {
     setupWebRTC();
@@ -131,7 +135,10 @@ export default function CircleScreen({ route }) {
         const stream = event.streams[0];
         const isVideoTrack = event.track.kind === 'video';
         if (isVideoTrack) {
-          setRemoteStreams(prev => [...prev, stream]);
+          setRemoteStreams(prev => ({
+            ...prev,
+            [memberId]: stream,
+          }));
         }
       };
 
@@ -165,7 +172,10 @@ export default function CircleScreen({ route }) {
         const stream = event.streams[0];
         const isVideoTrack = event.track.kind === 'video';
         if (isVideoTrack) {
-          setRemoteStreams(prev => [...prev, stream]);
+          setRemoteStreams(prev => ({
+            ...prev,
+            [from]: stream,
+          }));
         }
       };
 
@@ -418,6 +428,109 @@ export default function CircleScreen({ route }) {
     setIsStreaming(false);
   };
 
+  const switchDisplayMode = (mode) => {
+    setDisplayMode(mode);
+    if (mode === 'continuom') {
+      navigation.navigate('VRView');
+    }
+  };
+
+  const switchCamera = async () => {
+    if (localStream) {
+      const tracks = localStream.getTracks();
+      tracks.forEach(track => track.stop());
+    }
+
+    const newCameraType = cameraType === 'front' ? 'back' : 'front';
+    setCameraType(newCameraType);
+
+    try {
+      const constraints = {
+        video: {
+          facingMode: newCameraType,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: true
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      setLocalStream(stream);
+      
+      // Update stream in WebRTC connections
+      Object.values(peerConnections.current).forEach(pc => {
+        const senders = pc.getSenders();
+        const videoSender = senders.find(sender => sender.track.kind === 'video');
+        if (videoSender) {
+          videoSender.replaceTrack(stream.getVideoTracks()[0]);
+        }
+      });
+    } catch (error) {
+      console.error('Error switching camera:', error);
+    }
+  };
+
+  const renderMainDisplay = () => {
+    return (
+      <View style={styles.mainVideoContainer}>
+        <RTCView
+          streamURL={displayMode === 'local' 
+            ? localStreams.back?.toURL()  // Local mode: show user's back camera
+            : remoteStreams[selectedMember]?.toURL()}  // Remote mode: show selected member's back camera
+          style={styles.mainVideo}
+          objectFit="cover"
+        />
+      </View>
+    );
+  };
+
+  const renderFloatingFrame = () => {
+    return (
+      <View style={styles.floatingFrame}>
+        <RTCView
+          streamURL={displayMode === 'local'
+            ? localStreams.front?.toURL()  // Local mode: show user's front camera
+            : remoteStreams[selectedMember]?.toURL()}  // Remote mode: show selected member's front camera
+          style={styles.floatingVideo}
+          objectFit="cover"
+        />
+        <TouchableOpacity
+          style={styles.switchCameraButton}
+          onPress={() => setDisplayMode(prev => prev === 'local' ? 'remote' : 'local')}
+        >
+          <Text style={styles.buttonText}>Switch View</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderMemberList = () => {
+    return (
+      <View style={styles.memberList}>
+        {Object.keys(remoteStreams).map((memberId) => (
+          <TouchableOpacity
+            key={memberId}
+            style={[
+              styles.memberItem,
+              selectedMember === memberId && styles.selectedMember
+            ]}
+            onPress={() => {
+              setSelectedMember(memberId);
+              setDisplayMode('remote');
+            }}
+          >
+            <RTCView
+              streamURL={remoteStreams[memberId]?.toURL()}
+              style={styles.memberVideo}
+              objectFit="cover"
+            />
+            <Text style={styles.memberName}>{memberId}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
   if (hasPermission === null) {
     return <View />;
   }
@@ -431,79 +544,11 @@ export default function CircleScreen({ route }) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.videoContainer}>
-        {showMap ? (
-          <MapView
-            ref={mapRef}
-            style={styles.map}
-            initialRegion={{
-              latitude: location?.latitude || 37.78825,
-              longitude: location?.longitude || -122.4324,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}
-            onMapReady={fitMapToMarkers}
-          >
-            {location && (
-              <Marker
-                coordinate={{
-                  latitude: location.latitude,
-                  longitude: location.longitude,
-                }}
-                title="You"
-                pinColor="#007AFF"
-              />
-            )}
-            {Object.entries(remoteLocations).map(([memberId, loc]) => (
-              <Marker
-                key={memberId}
-                coordinate={{
-                  latitude: loc.latitude,
-                  longitude: loc.longitude,
-                }}
-                title={`Member ${memberId.slice(0, 4)}`}
-                pinColor="#FF3B30"
-              />
-            ))}
-          </MapView>
-        ) : (
-          <View style={styles.mainVideoArea}>
-            {Object.entries(peerBackCameraStreams).map(([memberId, pixelData]) => (
-              <View key={memberId} style={styles.backCameraStream}>
-                <View style={styles.pixelGrid}>
-                  {pixelData.map((pixel, index) => (
-                    <View
-                      key={index}
-                      style={[styles.pixel, { backgroundColor: pixel.color }]}
-                    />
-                  ))}
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Local video bubble overlay */}
-        {localStreams.front && (
-          <View style={styles.localVideoBubble}>
-            <RTCView
-              ref={ref => localVideoRefs.current.front = ref}
-              streamURL={localStreams.front.toURL()}
-              style={styles.localVideo}
-            />
-          </View>
-        )}
-
+        {renderMainDisplay()}
+        {renderFloatingFrame()}
+        
         {/* Control buttons */}
         <View style={styles.controlButtons}>
-          <TouchableOpacity
-            style={styles.switchButton}
-            onPress={toggleCamera}
-          >
-            <Text style={styles.switchButtonText}>
-              Switch Camera
-            </Text>
-          </TouchableOpacity>
-
           <TouchableOpacity
             style={[styles.switchButton, styles.mapButton]}
             onPress={toggleMap}
@@ -548,6 +593,8 @@ export default function CircleScreen({ route }) {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {renderMemberList()}
     </KeyboardAvoidingView>
   );
 }
@@ -561,15 +608,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  mainVideoArea: {
+  mainVideoContainer: {
     flex: 1,
     backgroundColor: '#000',
   },
-  backCameraStream: {
-    flex: 1,
-    backgroundColor: '#2c2c2c',
+  mainVideo: {
+    width: '100%',
+    height: '100%',
   },
-  localVideoBubble: {
+  floatingFrame: {
     position: 'absolute',
     top: 20,
     right: 20,
@@ -589,7 +636,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  localVideo: {
+  floatingVideo: {
     width: '100%',
     height: '100%',
   },
@@ -688,5 +735,49 @@ const styles = StyleSheet.create({
   pixel: {
     width: '12.5%', // 8x8 grid (32/4 for performance)
     height: '12.5%',
+  },
+  memberList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 10,
+    backgroundColor: '#1a1a1a',
+  },
+  memberItem: {
+    width: 100,
+    height: 100,
+    margin: 5,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#333',
+  },
+  selectedMember: {
+    borderColor: '#007AFF',
+  },
+  memberVideo: {
+    width: '100%',
+    height: '100%',
+  },
+  memberName: {
+    position: 'absolute',
+    bottom: 5,
+    left: 5,
+    color: '#fff',
+    fontSize: 12,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 2,
+    borderRadius: 4,
+  },
+  switchCameraButton: {
+    position: 'absolute',
+    bottom: 5,
+    right: 5,
+    padding: 5,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  placeholderText: {
+    color: '#fff',
+    fontSize: 18,
   },
 }); 
