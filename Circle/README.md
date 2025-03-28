@@ -161,6 +161,10 @@ The Continuom positions are visualized in VR using QubPix (colored cubes):
    - Up/Down is represented by zoom level and device tilt
    - North/South/East/West are represented by position on the map
    - Real-time accelerometer data adjusts the view
+7. Toggle the Continuom grid:
+   - Tap the "Hide Grid" button in the top-right corner to hide the grid
+   - Tap "Show Grid" to display the grid again
+   - Grid visibility state persists during the session
 
 #### Position Mapping Example
 

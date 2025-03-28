@@ -101,6 +101,7 @@ export default function PosSysScreen() {
   const recordingTimer = useRef(null);
   const recordingStartTime = useRef(null);
   const [recordingUri, setRecordingUri] = useState(null);
+  const [showGrid, setShowGrid] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -655,6 +656,24 @@ export default function PosSysScreen() {
               <Text style={styles.recordingText}>{recordingDuration} seconds</Text>
             </View>
           )}
+          <View style={styles.overlay}>
+            {/* Add grid toggle button */}
+            <TouchableOpacity 
+              style={[styles.gridToggleButton, !showGrid && styles.gridToggleButtonHidden]}
+              onPress={() => setShowGrid(!showGrid)}
+            >
+              <Text style={styles.gridToggleText}>
+                {showGrid ? 'Hide Grid' : 'Show Grid'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Update grid rendering with showGrid condition */}
+            {showGrid && (
+              <View style={styles.gridContainer}>
+                {renderGrid()}
+              </View>
+            )}
+          </View>
         </Camera>
       </View>
 
@@ -913,5 +932,31 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     marginTop: 4,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gridToggleButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 10,
+    borderRadius: 8,
+    zIndex: 1000,
+  },
+  gridToggleButtonHidden: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  gridToggleText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 }); 
