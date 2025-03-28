@@ -48,6 +48,7 @@ export default function PosSysScreen() {
   const wsRef = useRef(null);
   const streamInterval = useRef(null);
   const [pixelData, setPixelData] = useState([]);
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -279,6 +280,36 @@ export default function PosSysScreen() {
     });
   };
 
+  const handleShare = () => {
+    if (!selectedPosition) {
+      Alert.alert('Error', 'Please select a position first');
+      return;
+    }
+
+    setIsSharing(true);
+    const pixelCoordinates = convertContinuomToPixels(selectedPosition);
+    
+    // Send position data to all circle members
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'share_possys',
+        circleId: faceKey,
+        position: selectedPosition,
+        pixelData: pixelCoordinates
+      }));
+    }
+  };
+
+  const stopSharing = () => {
+    setIsSharing(false);
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'stop_sharing',
+        circleId: faceKey
+      }));
+    }
+  };
+
   if (hasPermission === null) {
     return <View />;
   }
@@ -380,6 +411,47 @@ export default function PosSysScreen() {
           })}
         </MapView>
       </View>
+
+      <View style={styles.controlPanel}>
+        <Text style={styles.title}>PosSys Continuom</Text>
+        <View style={styles.accelerometerInfo}>
+          <Text style={styles.accelerometerText}>
+            Device Orientation: {Math.round(accelerometerData.z * 100)}%
+          </Text>
+        </View>
+        <View style={styles.grid}>
+          {Continuom.map((pos) => (
+            <TouchableOpacity
+              key={pos.id}
+              style={[
+                styles.positionButton,
+                selectedPosition?.id === pos.id && styles.selectedButton,
+              ]}
+              onPress={() => handlePositionSelect(pos)}
+            >
+              <Text style={[
+                styles.buttonText,
+                selectedPosition?.id === pos.id && styles.selectedButtonText,
+              ]}>
+                {pos.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        
+        {/* Share Button */}
+        <TouchableOpacity
+          style={[
+            styles.shareButton,
+            isSharing && styles.sharingButton
+          ]}
+          onPress={isSharing ? stopSharing : handleShare}
+        >
+          <Text style={styles.buttonText}>
+            {isSharing ? 'Stop Sharing' : 'Share Position'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -463,6 +535,49 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
   },
   stopButton: {
+    backgroundColor: '#f44336',
+  },
+  controlPanel: {
+    padding: 20,
+    backgroundColor: '#fff',
+    marginBottom: 20,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  accelerometerInfo: {
+    marginBottom: 15,
+  },
+  accelerometerText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  grid: {
+    marginBottom: 15,
+  },
+  positionButton: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 5,
+  },
+  selectedButton: {
+    backgroundColor: '#4CAF50',
+  },
+  selectedButtonText: {
+    color: '#fff',
+  },
+  shareButton: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  sharingButton: {
     backgroundColor: '#f44336',
   },
 }); 

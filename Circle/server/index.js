@@ -28,6 +28,7 @@ const circleSchema = new mongoose.Schema({
 const Circle = mongoose.model('Circle', circleSchema);
 
 const circles = new Map(); // Store circle members and their WebSocket connections
+const sharingMembers = new Map(); // Store members who are sharing their PosSys
 
 io.on('connection', (socket) => {
   console.log('Client connected');
@@ -48,19 +49,46 @@ io.on('connection', (socket) => {
     socket.join(circleId);
   });
 
-  socket.on('stream_update', (data) => {
-    const { circleId, cameraType, pixelData } = data;
+  socket.on('share_possys', (data) => {
+    const { circleId, position, pixelData } = data;
+    
+    // Store sharing state
+    if (!sharingMembers.has(circleId)) {
+      sharingMembers.set(circleId, new Map());
+    }
+    sharingMembers.get(circleId).set(socket.id, {
+      position,
+      pixelData,
+      timestamp: Date.now()
+    });
     
     // Broadcast to all other members in the circle
-    socket.to(circleId).emit('member_stream', {
+    socket.to(circleId).emit('possys_shared', {
       memberId: socket.id,
-      cameraType,
+      position,
       pixelData
     });
   });
 
+  socket.on('stop_sharing', (data) => {
+    const { circleId } = data;
+    
+    // Remove sharing state
+    if (sharingMembers.has(circleId)) {
+      sharingMembers.get(circleId).delete(socket.id);
+      
+      // Clean up empty circle
+      if (sharingMembers.get(circleId).size === 0) {
+        sharingMembers.delete(circleId);
+      }
+    }
+    
+    // Notify other members
+    socket.to(circleId).emit('possys_stopped', { memberId: socket.id });
+  });
+
   socket.on('disconnect', () => {
-    // Remove member from all circles
+    // Remove member from all circles and sharing states
     circles.forEach((members, circleId) => {
       if (members.has(socket.id)) {
         members.delete(socket.id);
@@ -69,6 +97,19 @@ io.on('connection', (socket) => {
         // Clean up empty circles
         if (members.size === 0) {
           circles.delete(circleId);
+        }
+      }
+    });
+
+    // Clean up sharing states
+    sharingMembers.forEach((members, circleId) => {
+      if (members.has(socket.id)) {
+        members.delete(socket.id);
+        io.to(circleId).emit('possys_stopped', { memberId: socket.id });
+        
+        // Clean up empty circles
+        if (members.size === 0) {
+          sharingMembers.delete(circleId);
         }
       }
     });

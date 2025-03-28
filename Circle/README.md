@@ -13,6 +13,7 @@ Circle is a hybrid mobile application that enables secure group communication th
 - Position System (PosSys) with Continuom coordinate system
 - Live location sharing
 - Device orientation-based positioning
+- VR visualization of shared positions
 
 ## Prerequisites
 
@@ -57,6 +58,7 @@ npm run mobile
   - `FaceScanScreen.js` - Face recognition and circle joining screen
   - `CircleScreen.js` - Group chat interface with video, audio, and text
   - `PosSysScreen.js` - Position System with Continuom coordinate system
+  - `VRViewScreen.js` - VR visualization of shared positions
 
 ## Usage
 
@@ -69,10 +71,13 @@ npm run mobile
 
 ### Position System (PosSys)
 
-The PosSys feature implements a unique 3D coordinate system called Continuom, which maps positions to a 2D map interface using the device's current location and orientation:
+The PosSys feature implements a unique 3D coordinate system called Continuom, which maps positions to both a 2D map interface and a VR space using the device's current location and orientation.
+
+#### Continuom Coordinate System
+
+The Continuom system defines 8 unique positions in 3D space:
 
 ```javascript
-// Continuom coordinate system
 const Continuom = [
   { id: 0, name: 'Up-North-West', up: true, north: true, west: true },
   { id: 1, name: 'Up-South-West', up: true, north: false, west: true },
@@ -84,6 +89,11 @@ const Continuom = [
   { id: 7, name: 'Down-North-East', up: false, north: true, west: false },
 ];
 ```
+
+Each position is defined by three binary attributes:
+- `up`: Vertical position (true = above ground, false = below ground)
+- `north`: North-South position (true = north, false = south)
+- `west`: East-West position (true = west, false = east)
 
 #### Using PosSys
 
@@ -123,6 +133,23 @@ const getMapCoordinates = (position) => {
   };
 };
 ```
+
+#### VR Visualization
+
+The PosSys positions are also visualized in VR using A-Frame:
+
+1. Each position is represented as a 32x32x32 grid of colored pixels
+2. Pixels are positioned in 3D space based on their Continuom coordinates
+3. Color and intensity are calculated based on position and distance from center
+4. Real-time updates when positions change
+5. Interactive hover effects on pixels
+
+#### Sharing Positions
+
+1. Select a Continuom position
+2. Tap "Share Position" to broadcast your position to circle members
+3. Other members will see your position in their VR view
+4. Tap "Stop Sharing" to end position sharing
 
 ### Live Location Sharing
 

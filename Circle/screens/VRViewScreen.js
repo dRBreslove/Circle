@@ -18,7 +18,7 @@ const VRViewScreen = ({ route }) => {
             <script>
               AFRAME.registerComponent('continuom-pixels', {
                 init: function() {
-                  this.pixels = [];
+                  this.pixels = new Map(); // Store pixels by memberId
                   this.setupWebSocket();
                 },
                 setupWebSocket: function() {
@@ -26,22 +26,20 @@ const VRViewScreen = ({ route }) => {
                   
                   ws.onmessage = (event) => {
                     const data = JSON.parse(event.data);
-                    if (data.type === 'stream_update') {
-                      this.updatePixels(data.pixelData);
+                    
+                    if (data.type === 'possys_shared') {
+                      this.updateMemberPixels(data.memberId, data.pixelData);
+                    } else if (data.type === 'possys_stopped') {
+                      this.removeMemberPixels(data.memberId);
                     }
                   };
                 },
-                updatePixels: function(pixelData) {
-                  // Remove existing pixels
-                  this.pixels.forEach(pixel => {
-                    if (pixel.el) {
-                      pixel.el.parentNode.removeChild(pixel.el);
-                    }
-                  });
-                  
-                  this.pixels = [];
+                updateMemberPixels: function(memberId, pixelData) {
+                  // Remove existing pixels for this member
+                  this.removeMemberPixels(memberId);
                   
                   // Create new pixels
+                  const memberPixels = [];
                   pixelData.forEach(pixel => {
                     const box = document.createElement('a-box');
                     box.setAttribute('position', \`\${pixel.x} \${pixel.y} \${pixel.z}\`);
@@ -51,9 +49,28 @@ const VRViewScreen = ({ route }) => {
                     box.setAttribute('color', pixel.color);
                     box.setAttribute('material', \`opacity: \${pixel.intensity}\`);
                     
+                    // Add hover effect
+                    box.addEventListener('mouseenter', function() {
+                      this.setAttribute('scale', '1.2 1.2 1.2');
+                    });
+                    box.addEventListener('mouseleave', function() {
+                      this.setAttribute('scale', '1 1 1');
+                    });
+                    
                     this.el.appendChild(box);
-                    this.pixels.push({ el: box, data: pixel });
+                    memberPixels.push(box);
                   });
+                  
+                  this.pixels.set(memberId, memberPixels);
+                },
+                removeMemberPixels: function(memberId) {
+                  const memberPixels = this.pixels.get(memberId);
+                  if (memberPixels) {
+                    memberPixels.forEach(pixel => {
+                      pixel.parentNode.removeChild(pixel);
+                    });
+                    this.pixels.delete(memberId);
+                  }
                 }
               });
             </script>
