@@ -356,3 +356,76 @@ If you encounter build issues:
 2. Clean build folder and remove derived data
 3. Ensure all required capabilities are enabled
 4. Check signing certificate and provisioning profile
+
+## Android Development Setup
+
+### Prerequisites
+- Android Studio Hedgehog (2023.1.1) or later
+- Android SDK 34 (Android 14)
+- Minimum SDK 24 (Android 7.0)
+- Kotlin 1.9.20
+- JDK 17
+
+### Project Structure
+```
+android/
+├── app/
+│   ├── src/
+│   │   └── main/
+│   │       ├── java/com/circle/app/
+│   │       │   ├── MainActivity.kt
+│   │       │   ├── service/
+│   │       │   ├── ui/
+│   │       │   │   ├── screens/
+│   │       │   │   └── theme/
+│   │       │   └── utils/
+│   │       ├── res/
+│   │       │   ├── drawable/
+│   │       │   ├── layout/
+│   │       │   └── values/
+│   │       └── AndroidManifest.xml
+│   └── build.gradle
+└── build.gradle
+```
+
+### Required Permissions
+The app requires the following Android permissions:
+- `INTERNET` for WebRTC and network communication
+- `CAMERA` for face recognition and video chat
+- `RECORD_AUDIO` for audio chat
+- `ACCESS_FINE_LOCATION` for Position System
+- `ACCESS_COARSE_LOCATION` for approximate location
+- `WRITE_EXTERNAL_STORAGE` for video recording (Android 9 and below)
+- `READ_EXTERNAL_STORAGE` for accessing recorded videos (Android 9 and below)
+
+### Dependencies
+Key dependencies include:
+- Jetpack Compose for modern UI
+- CameraX for camera functionality
+- Google Maps SDK for location features
+- WebRTC for video/audio communication
+- Room for local storage
+- Retrofit for network calls
+- Coroutines for asynchronous operations
+
+### Building the App
+1. Open the project in Android Studio
+2. Sync project with Gradle files
+3. Connect an Android device or start an emulator
+4. Click "Run" or press Shift+F10
+
+### Development Notes
+- Uses Material3 design system
+- Implements MVVM architecture
+- Follows Android best practices
+- Supports both light and dark themes
+- Implements runtime permissions handling
+- Uses Kotlin Coroutines for async operations
+
+### Troubleshooting
+If you encounter build issues:
+1. Clean project (Build > Clean Project)
+2. Invalidate caches (File > Invalidate Caches)
+3. Update Gradle sync
+4. Check SDK versions in build.gradle files
+5. Verify all required permissions in AndroidManifest.xml
