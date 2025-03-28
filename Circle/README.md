@@ -250,14 +250,38 @@ The Circle app supports two main display modes with different camera configurati
 
 ### Screen Recording
 
-The app includes screen recording functionality:
+The app includes screen recording functionality with direct WhatsApp sharing:
 
 1. Tap the "Start Recording" button to begin recording
 2. Recording duration is displayed in MM:SS format
 3. Visual indicator shows recording status
-4. Recordings are saved to the device's gallery
+4. Recordings are automatically saved to the app's Movies directory
 5. Maximum recording duration: 1 hour
 6. Quality: 720p
+
+#### Recording Storage
+
+- All recordings are stored in the app's Movies directory
+- Each recording has a unique filename with timestamp
+- The Movies directory is created automatically if it doesn't exist
+- Recordings persist between app sessions
+
+#### Direct WhatsApp Sharing
+
+1. After recording completes, you'll be prompted to share the video
+2. Tap "Share" to open WhatsApp sharing options
+3. Choose a WhatsApp contact or group
+4. Add an optional message
+5. Send the video directly to WhatsApp
+
+Features:
+- One-tap sharing to WhatsApp
+- No need to manually locate the video file
+- Direct integration with WhatsApp's sharing interface
+- Maintains original video quality
+- Works with both individual chats and group chats
+
+Note: WhatsApp must be installed on the device to share videos. The app will prompt to install WhatsApp if it's not available.
 
 ## Security
 

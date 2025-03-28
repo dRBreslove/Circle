@@ -8,6 +8,7 @@ import {
   Alert,
   ScrollView,
   Platform,
+  Linking,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
@@ -18,6 +19,7 @@ import * as Location from 'expo-location';
 import * as Device from 'expo-device';
 import * as FileSystem from 'expo-file-system';
 import { WebSocket } from 'react-native-websocket';
+import * as Sharing from 'expo-sharing';
 
 const { width } = Dimensions.get('window');
 
@@ -98,6 +100,7 @@ export default function PosSysScreen() {
   const [recordingDuration, setRecordingDuration] = useState(0);
   const recordingTimer = useRef(null);
   const recordingStartTime = useRef(null);
+  const [recordingUri, setRecordingUri] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -468,35 +471,55 @@ export default function PosSysScreen() {
   };
 
   const startRecording = async () => {
-    if (!cameraRef.current || isRecording) return;
-
     try {
-      setIsRecording(true);
-      recordingStartTime.current = Date.now();
-      
-      // Start recording timer
-      recordingTimer.current = setInterval(() => {
-        const duration = Math.floor((Date.now() - recordingStartTime.current) / 1000);
-        setRecordingDuration(duration);
-      }, 1000);
+      if (!cameraRef.current) return;
 
-      // Start camera recording
-      await cameraRef.current.recordAsync({
+      setIsRecording(true);
+      setRecordingStartTime(Date.now());
+      setRecordingTimer(setInterval(updateRecordingDuration, 1000));
+
+      // Create a unique filename in the Movies directory
+      const fileName = `Circle_Recording_${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
+      const moviesDir = `${FileSystem.documentDirectory}Movies/`;
+      
+      // Ensure Movies directory exists
+      const dirInfo = await FileSystem.getInfoAsync(moviesDir);
+      if (!dirInfo.exists) {
+        await FileSystem.makeDirectoryAsync(moviesDir, { intermediates: true });
+      }
+
+      const video = await cameraRef.current.recordAsync({
         quality: Camera.Constants.VideoQuality['720p'],
         maxDuration: 3600, // 1 hour max
         skipProcessing: true,
       });
 
-      Alert.alert(
-        'Recording Saved',
-        'Video has been saved to your device\'s gallery',
-        [{ text: 'OK' }]
-      );
+      // Move the recorded video to the Movies directory
+      const destinationUri = `${moviesDir}${fileName}`;
+      await FileSystem.moveAsync({
+        from: video.uri,
+        to: destinationUri
+      });
 
-      stopRecording();
+      setRecordingUri(destinationUri);
+      Alert.alert(
+        'Recording Complete',
+        'Would you like to share this video?',
+        [
+          {
+            text: 'Share',
+            onPress: () => shareToWhatsApp(destinationUri)
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          }
+        ]
+      );
     } catch (error) {
-      console.error('Error recording video:', error);
-      Alert.alert('Error', 'Failed to record video');
+      console.error('Error starting recording:', error);
+      Alert.alert('Error', 'Failed to start recording');
+    } finally {
       stopRecording();
     }
   };
@@ -513,10 +536,35 @@ export default function PosSysScreen() {
     }
   };
 
-  const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const updateRecordingDuration = () => {
+    const duration = Math.floor((Date.now() - recordingStartTime.current) / 1000);
+    setRecordingDuration(duration);
+  };
+
+  const shareToWhatsApp = async (videoUri) => {
+    try {
+      // Check if WhatsApp is installed
+      const isWhatsAppInstalled = await Linking.canOpenURL('whatsapp://send');
+      
+      if (!isWhatsAppInstalled) {
+        Alert.alert(
+          'WhatsApp Not Installed',
+          'Please install WhatsApp to share videos',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Share the video directly from the Movies directory
+      await Sharing.shareAsync(videoUri, {
+        mimeType: 'video/mp4',
+        dialogTitle: 'Share to WhatsApp',
+        UTI: 'public.movie'
+      });
+    } catch (error) {
+      console.error('Error sharing to WhatsApp:', error);
+      Alert.alert('Error', 'Failed to share video to WhatsApp');
+    }
   };
 
   if (hasPermission === null) {
@@ -589,7 +637,7 @@ export default function PosSysScreen() {
           onPress={isRecording ? stopRecording : startRecording}
         >
           <Text style={styles.buttonText}>
-            {isRecording ? `Stop Recording (${formatDuration(recordingDuration)})` : 'Start Recording'}
+            {isRecording ? `Stop Recording (${recordingDuration} seconds)` : 'Start Recording'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -604,7 +652,7 @@ export default function PosSysScreen() {
           {isRecording && (
             <View style={styles.recordingIndicator}>
               <View style={styles.recordingDot} />
-              <Text style={styles.recordingText}>{formatDuration(recordingDuration)}</Text>
+              <Text style={styles.recordingText}>{recordingDuration} seconds</Text>
             </View>
           )}
         </Camera>
@@ -837,7 +885,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
   },
   recordingButton: {
-    backgroundColor: '#f44336',
+    backgroundColor: '#ff4444',
   },
   recordingIndicator: {
     position: 'absolute',
@@ -860,5 +908,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  recordingDuration: {
+    color: '#fff',
+    fontSize: 12,
+    marginTop: 4,
   },
 }); 
