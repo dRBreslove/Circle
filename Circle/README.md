@@ -511,9 +511,15 @@ SyncMode is a special feature that enables synchronized VR experiences when circ
    - User One streams:
      - Main Display: White background with red dot in the center
      - Floating Frame: White screen with red dot
+     - Both dots are linked to User One's device accelerometer
    - User Two streams:
      - Main Display: White background with red dot in the center
      - Floating Frame: White screen with red dot
+     - Both dots are linked to User Two's device accelerometer
+   - The red dots move in real-time based on device movement:
+     - Tilting the device moves the dots up/down/left/right
+     - Rotating the device affects dot position
+     - Movement is synchronized between both users' displays
 
 2. **Sync Point Alignment**
    - When all four red dots are perfectly centered:
@@ -535,11 +541,17 @@ SyncMode is a special feature that enables synchronized VR experiences when circ
      - Member opacity shows individual sync strength
      - Connection lines show relationship strength
      - Scene environment changes based on overall circle strength
+   - Continuom Grid Toggle:
+     - Tap the "Toggle Grid" button to show/hide the Continuom grid
+     - Grid visibility is synchronized between all members
+     - Grid state persists during the sync session
+     - Grid helps visualize the 8 positions in 3D space
 
 5. **Real-time Updates**
    - Position updates are broadcast to all members
    - Scene updates maintain relative positions
    - Circle strength affects visual effects and environment
+   - Grid visibility changes are synchronized in real-time
 
 6. **Sync Requirements**
    - Two members must be physically present
