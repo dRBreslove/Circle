@@ -111,16 +111,36 @@ The Continuom system defines 8 unique positions in 3D space with perspective-bas
 ![PosSys Diagram](src/assets/images/possys-diagram.png)
 
 ```javascript
-const Continuom = [
-  // Right side positions with perspective scaling
-  { 
-    id: 0, 
-    name: 'RightFrontUp', 
-    cor: { x: 0, y: 0, z: 0 },
-    perspective: { scale: 1, depth: 0 }
+// MongoDB Schema for Continuom
+const ContinuomSchema = {
+  id: Number,          // Unique identifier (0-7)
+  name: String,        // Position name (e.g., 'RightFrontUp')
+  cor: {
+    x: Number,         // X coordinate
+    y: Number,         // Y coordinate
+    z: Number          // Z coordinate
   },
-  // ... other positions
-];
+  perspective: {
+    scale: Number,     // Base scaling factor (1 for front, 0.8 for back)
+    depth: Number      // Depth factor (0 for front, 1 for back)
+  },
+  circleId: String,    // Reference to the circle this Continuom belongs to
+  memberId: String,    // Reference to the member who owns this Continuom
+  createdAt: Date,     // When the Continuom was created
+  updatedAt: Date      // When the Continuom was last updated
+};
+
+// Example Continuom document in MongoDB
+{
+  id: 0,
+  name: 'RightFrontUp',
+  cor: { x: 0, y: 0, z: 0 },
+  perspective: { scale: 1, depth: 0 },
+  circleId: 'circle123',
+  memberId: 'member456',
+  createdAt: ISODate('2024-03-28T12:00:00Z'),
+  updatedAt: ISODate('2024-03-28T12:00:00Z')
+}
 ```
 
 Each position is defined by:
@@ -505,21 +525,29 @@ If you encounter build issues:
 
 ### SyncMode
 
-SyncMode is a special feature that enables synchronized VR experiences when circle members physically meet in the same location. This feature requires specific physical setup:
+SyncMode is a special feature that enables synchronized VR experiences when circle members physically meet in the same location. The sync process happens between two members at a time:
 
-1. **Physical Setup**
-   - All members must be physically present in the same location
+1. **Two-Member Sync Process**
+   - User One streams:
+     - Main Display: White background with red dot in the center
+     - Floating Frame: White screen with red dot
+   - User Two streams:
+     - Main Display: White background with red dot in the center
+     - Floating Frame: White screen with red dot
+
+2. **Sync Point Alignment**
+   - When all four red dots are perfectly centered:
+     - Two dots in User One's view (main display and floating frame)
+     - Two dots in User Two's view (main display and floating frame)
+   - A ContinuomSync is automatically created
+   - The sync point (0,0,0,0,0,0,0,0) is established
+
+3. **Physical Setup**
    - Devices must be laid out side by side on a flat surface
    - Devices must be at distance 0 (touching or very close to each other)
-   - This physical arrangement becomes the center (0,0,0,0,0,0,0,0) of the shared Continuom space
+   - This physical arrangement becomes the center of the shared Continuom space
 
-2. **Sync Process**
-   - Members confirm their devices are properly laid out
-   - Each device's position is measured relative to the center point
-   - The system establishes the shared sync point at (0,0,0,0,0,0,0,0)
-   - All subsequent positions and movements are calculated relative to this physical center point
-
-3. **Synchronized VR Experience**
+4. **Synchronized VR Experience**
    - All members see the same A-Frame scene
    - Member positions are represented as colored cubes
    - Connection lines show the relationships between members
@@ -528,18 +556,18 @@ SyncMode is a special feature that enables synchronized VR experiences when circ
      - Connection lines show relationship strength
      - Scene environment changes based on overall circle strength
 
-4. **Real-time Updates**
+5. **Real-time Updates**
    - Position updates are broadcast to all members
    - Scene updates maintain relative positions
    - Circle strength affects visual effects and environment
 
-5. **Sync Requirements**
-   - All members must be physically present
+6. **Sync Requirements**
+   - Two members must be physically present
    - Devices must be laid out side by side
    - Devices must be at distance 0 (touching or very close)
-   - Circle must be complete (all members connected)
-   - All members must confirm their positions
-   - Sync point must be established by all members
+   - All four red dots must be perfectly centered
+   - Both members must have their streams active
+   - ContinuomSync must be automatically established
 
 The sync point (0,0,0,0,0,0,0,0) represents the physical center point where the devices are laid out, serving as the reference point for all subsequent movements and interactions in the shared VR space.
 

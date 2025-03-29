@@ -55,4 +55,28 @@ export const PERSPECTIVE_SCALES = {
   SIDE: 0.9
 };
 
-export const GRID_SIZE = 32; 
+export const GRID_SIZE = 32;
+
+export const SYNC_POINT = {
+  x: 0,
+  y: 0,
+  z: 0,
+  rotation: { x: 0, y: 0, z: 0 },
+  scale: 1
+};
+
+export const POSITION_COLORS = {
+  RFU: '#FF0000',
+  RFD: '#FF3333',
+  RBU: '#FF6666',
+  RBD: '#FF9999',
+  LFU: '#0000FF',
+  LFD: '#3333FF',
+  LBU: '#6666FF',
+  LBD: '#9999FF'
+};
+
+export const SYNC_DISTANCE = {
+  MIN: 0,  // Devices must be touching
+  MAX: 5   // Maximum distance in centimeters
+}; 

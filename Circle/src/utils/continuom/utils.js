@@ -1,4 +1,4 @@
-import { GRID_SIZE, PERSPECTIVE_SCALES } from './constants';
+import { GRID_SIZE, POSITION_COLORS, SYNC_POINT } from './constants';
 
 export const parsePositionName = (name) => {
   const [side, direction, vertical] = name.split('');
@@ -9,12 +9,18 @@ export const parsePositionName = (name) => {
   };
 };
 
-export const calculateColor = (x, y, z) => {
-  // Convert coordinates to RGB values
-  const r = Math.floor((x / GRID_SIZE) * 255);
-  const g = Math.floor((y / GRID_SIZE) * 255);
-  const b = Math.floor((z / GRID_SIZE) * 255);
-  return `rgb(${r}, ${g}, ${b})`;
+export const calculateColor = (x, y, z, positionName) => {
+  // Use predefined color for the position
+  const baseColor = POSITION_COLORS[positionName] || '#FFFFFF';
+  
+  // Convert base color to RGB
+  const r = parseInt(baseColor.slice(1, 3), 16);
+  const g = parseInt(baseColor.slice(3, 5), 16);
+  const b = parseInt(baseColor.slice(5, 7), 16);
+  
+  // Adjust color based on coordinates
+  const intensity = calculateIntensity(x, y, z);
+  return `rgb(${r * intensity}, ${g * intensity}, ${b * intensity})`;
 };
 
 export const calculateIntensity = (x, y, z) => {
@@ -24,7 +30,7 @@ export const calculateIntensity = (x, y, z) => {
     Math.pow(y - center, 2) + 
     Math.pow(z - center, 2)
   );
-  return 1 - (distance / (GRID_SIZE / 2));
+  return Math.max(0, 1 - (distance / (GRID_SIZE / 2)));
 };
 
 export const convertContinuomToPixels = (position) => {
@@ -42,7 +48,7 @@ export const convertContinuomToPixels = (position) => {
           x: (x - baseX) * scale,
           y: (y - baseY) * scale,
           z: (z - baseZ) * scale,
-          color: calculateColor(x, y, z),
+          color: calculateColor(x, y, z, position.name),
           intensity: calculateIntensity(x, y, z),
           scale
         });
@@ -51,4 +57,28 @@ export const convertContinuomToPixels = (position) => {
   }
   
   return pixels;
+};
+
+export const validateSyncPoint = (point) => {
+  return (
+    point.x === SYNC_POINT.x &&
+    point.y === SYNC_POINT.y &&
+    point.z === SYNC_POINT.z &&
+    point.rotation.x === SYNC_POINT.rotation.x &&
+    point.rotation.y === SYNC_POINT.rotation.y &&
+    point.rotation.z === SYNC_POINT.rotation.z &&
+    point.scale === SYNC_POINT.scale
+  );
+};
+
+export const calculateDistance = (point1, point2) => {
+  return Math.sqrt(
+    Math.pow(point2.x - point1.x, 2) +
+    Math.pow(point2.y - point1.y, 2) +
+    Math.pow(point2.z - point1.z, 2)
+  );
+};
+
+export const isWithinSyncRange = (distance) => {
+  return distance >= SYNC_DISTANCE.MIN && distance <= SYNC_DISTANCE.MAX;
 }; 
