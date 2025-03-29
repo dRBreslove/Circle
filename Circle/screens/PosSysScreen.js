@@ -10,7 +10,7 @@ import {
   Platform,
   Linking,
 } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import { Accelerometer } from 'expo-sensors';
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +20,7 @@ import * as Device from 'expo-device';
 import * as FileSystem from 'expo-file-system';
 import { WebSocket } from 'react-native-websocket';
 import * as Sharing from 'expo-sharing';
+import Logo from '../src/components/Logo';
 
 const { width } = Dimensions.get('window');
 
@@ -102,6 +103,13 @@ export default function PosSysScreen() {
   const recordingStartTime = useRef(null);
   const [recordingUri, setRecordingUri] = useState(null);
   const [showGrid, setShowGrid] = useState(true);
+  const [location, setLocation] = useState(null);
+  const [isTracking, setIsTracking] = useState(false);
+  const [accuracy, setAccuracy] = useState(null);
+  const [speed, setSpeed] = useState(null);
+  const [heading, setHeading] = useState(null);
+  const [altitude, setAltitude] = useState(null);
+  const watchId = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -143,6 +151,14 @@ export default function PosSysScreen() {
     return () => {
       if (wsRef.current) wsRef.current.close();
       if (streamInterval.current) clearInterval(streamInterval.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (watchId.current) {
+        Geolocation.clearWatch(watchId.current);
+      }
     };
   }, []);
 
@@ -568,6 +584,50 @@ export default function PosSysScreen() {
     }
   };
 
+  const startTracking = () => {
+    setIsTracking(true);
+    watchId.current = Geolocation.watchPosition(
+      (position) => {
+        const newLocation = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        };
+        setLocation(newLocation);
+        setAccuracy(position.coords.accuracy);
+        setSpeed(position.coords.speed);
+        setHeading(position.coords.heading);
+        setAltitude(position.coords.altitude);
+
+        if (mapRef.current) {
+          mapRef.current.animateToRegion(newLocation, 1000);
+        }
+      },
+      (error) => Alert.alert('Error', error.message),
+      {
+        enableHighAccuracy: true,
+        distanceFilter: 1,
+        interval: 1000,
+        fastestInterval: 500,
+      }
+    );
+  };
+
+  const stopTracking = () => {
+    setIsTracking(false);
+    if (watchId.current) {
+      Geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+    }
+  };
+
+  const centerOnLocation = () => {
+    if (location && mapRef.current) {
+      mapRef.current.animateToRegion(location, 1000);
+    }
+  };
+
   if (hasPermission === null) {
     return <View />;
   }
@@ -577,6 +637,19 @@ export default function PosSysScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      <Logo size={60} style={styles.logo} />
+      <View style={styles.header}>
+        <Text style={styles.title}>Position System</Text>
+        <TouchableOpacity 
+          style={[styles.trackButton, isTracking && styles.trackingActive]}
+          onPress={isTracking ? stopTracking : startTracking}
+        >
+          <Text style={styles.trackButtonText}>
+            {isTracking ? 'Stop Tracking' : 'Start Tracking'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.section}>
         <Text style={styles.title}>Position System</Text>
         
@@ -680,6 +753,7 @@ export default function PosSysScreen() {
       <View style={styles.mapContainer}>
         <MapView
           ref={mapRef}
+          provider={PROVIDER_GOOGLE}
           style={styles.map}
           initialRegion={{
             latitude: deviceLocation?.coords.latitude || 0,
@@ -691,6 +765,16 @@ export default function PosSysScreen() {
           showsMyLocationButton={true}
         >
           {renderGrid()}
+          {location && (
+            <Marker
+              coordinate={{
+                latitude: location.latitude,
+                longitude: location.longitude,
+              }}
+              title="Your Position"
+              description={`Accuracy: ${accuracy?.toFixed(2)}m`}
+            />
+          )}
         </MapView>
       </View>
 
@@ -734,6 +818,32 @@ export default function PosSysScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <View style={styles.infoContainer}>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Accuracy:</Text>
+          <Text style={styles.infoValue}>{accuracy?.toFixed(2)}m</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Speed:</Text>
+          <Text style={styles.infoValue}>{speed?.toFixed(2)}m/s</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Heading:</Text>
+          <Text style={styles.infoValue}>{heading?.toFixed(1)}°</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Altitude:</Text>
+          <Text style={styles.infoValue}>{altitude?.toFixed(1)}m</Text>
+        </View>
+      </View>
+
+      <TouchableOpacity 
+        style={styles.centerButton}
+        onPress={centerOnLocation}
+      >
+        <Text style={styles.centerButtonText}>Center on Location</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -742,6 +852,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  logo: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    paddingTop: 60,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  trackButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  trackingActive: {
+    backgroundColor: '#ff3b30',
+  },
+  trackButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   section: {
     padding: 20,
@@ -753,12 +898,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#333',
   },
   infoContainer: {
     marginBottom: 15,
@@ -958,5 +1097,58 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  infoContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 15,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  centerButton: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  centerButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 }); 

@@ -21,6 +21,7 @@ import Geolocation from '@react-native-community/geolocation';
 import MapView, { Marker } from 'react-native-maps';
 import { Camera } from 'expo-camera';
 import { WebSocket } from 'react-native-websocket';
+import Logo from '../src/components/Logo';
 
 const socket = io('http://localhost:3000');
 const { width } = Dimensions.get('window');
@@ -54,6 +55,10 @@ export default function CircleScreen({ route, navigation }) {
   const [selectedMember, setSelectedMember] = useState(null);
   const [cameraType, setCameraType] = useState('back'); // 'front' or 'back'
   const [localStream, setLocalStream] = useState(null);
+  const [streams, setStreams] = useState([]);
+  const [isHost, setIsHost] = useState(false);
+  const [circleName, setCircleName] = useState('');
+  const [participants, setParticipants] = useState([]);
 
   useEffect(() => {
     setupWebRTC();
@@ -114,6 +119,28 @@ export default function CircleScreen({ route, navigation }) {
   };
 
   const setupSocketListeners = () => {
+    socket.on('circle-created', ({ circleId, name }) => {
+      setCircleName(name);
+      setIsHost(true);
+    });
+
+    socket.on('circle-joined', ({ circleId, name, participants: existingParticipants }) => {
+      setCircleName(name);
+      setParticipants(existingParticipants);
+    });
+
+    socket.on('participant-joined', ({ participantId, stream }) => {
+      setStreams(prev => [...prev, { id: participantId, stream }]);
+    });
+
+    socket.on('participant-left', ({ participantId }) => {
+      setStreams(prev => prev.filter(s => s.id !== participantId));
+      if (peerConnections.current[participantId]) {
+        peerConnections.current[participantId].close();
+        delete peerConnections.current[participantId];
+      }
+    });
+
     socket.on('member-joined', async ({ memberId }) => {
       const pc = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
@@ -531,6 +558,11 @@ export default function CircleScreen({ route, navigation }) {
     );
   };
 
+  const handleLeaveCircle = () => {
+    socket.emit('leave-circle');
+    navigation.navigate('Home');
+  };
+
   if (hasPermission === null) {
     return <View />;
   }
@@ -543,6 +575,14 @@ export default function CircleScreen({ route, navigation }) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <Logo size={60} style={styles.logo} />
+      <View style={styles.header}>
+        <Text style={styles.circleName}>{circleName || 'Loading...'}</Text>
+        <TouchableOpacity style={styles.leaveButton} onPress={handleLeaveCircle}>
+          <Text style={styles.leaveButtonText}>Leave Circle</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.videoContainer}>
         {renderMainDisplay()}
         {renderFloatingFrame()}
@@ -595,6 +635,15 @@ export default function CircleScreen({ route, navigation }) {
       </View>
 
       {renderMemberList()}
+
+      <View style={styles.participantsList}>
+        <Text style={styles.participantsTitle}>Participants ({participants.length})</Text>
+        {participants.map(participant => (
+          <Text key={participant.id} style={styles.participantName}>
+            {participant.name}
+          </Text>
+        ))}
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -603,6 +652,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  logo: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    paddingTop: 60,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  circleName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  leaveButton: {
+    backgroundColor: '#ff3b30',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  leaveButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   videoContainer: {
     flex: 1,
@@ -779,5 +860,22 @@ const styles = StyleSheet.create({
   placeholderText: {
     color: '#fff',
     fontSize: 18,
+  },
+  participantsList: {
+    padding: 20,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  participantsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+  },
+  participantName: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
   },
 }); 

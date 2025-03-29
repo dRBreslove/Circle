@@ -1,15 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Button } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, StyleSheet, Button, Text, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useRoute } from '@react-navigation/native';
 import { calculateCircleSync } from '../utils/continuom/sync';
+import Logo from '../src/components/Logo';
 
-const VRViewScreen = () => {
-  const route = useRoute();
+const { width, height } = Dimensions.get('window');
+
+const VRViewScreen = ({ route, navigation }) => {
   const { cameraPoints, circleMembers } = route.params;
   const [syncStatus, setSyncStatus] = useState(null);
   const [isSyncReady, setIsSyncReady] = useState(false);
   const [syncPoint, setSyncPoint] = useState(null);
+  const webViewRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (circleMembers && circleMembers.length > 0) {
@@ -152,8 +156,23 @@ const VRViewScreen = () => {
     return sceneHtml;
   };
 
+  const handleWebViewLoad = () => {
+    setIsLoading(false);
+  };
+
   return (
     <View style={styles.container}>
+      <Logo size={50} style={styles.logo} />
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>VR View</Text>
+      </View>
+
       {!isSyncReady && (
         <View style={styles.syncButtonContainer}>
           <Button 
@@ -163,13 +182,23 @@ const VRViewScreen = () => {
           />
         </View>
       )}
+
+      {isLoading && (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading VR Scene...</Text>
+        </View>
+      )}
+
       <WebView
+        ref={webViewRef}
         source={{ html: generateVRScene() }}
         style={styles.webview}
+        onLoad={handleWebViewLoad}
         javaScriptEnabled={true}
         domStorageEnabled={true}
         startInLoadingState={true}
         scalesPageToFit={true}
+        scrollEnabled={false}
       />
     </View>
   );
@@ -178,9 +207,40 @@ const VRViewScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  logo: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    paddingTop: 60,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  backButton: {
+    marginRight: 20,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
   },
   webview: {
     flex: 1,
+    width: width,
+    height: height - 100,
   },
   syncButtonContainer: {
     position: 'absolute',
@@ -190,7 +250,21 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     padding: 10,
     borderRadius: 5,
-  }
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#666',
+  },
 });
 
 export default VRViewScreen;

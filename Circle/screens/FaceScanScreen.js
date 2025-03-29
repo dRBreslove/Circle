@@ -9,6 +9,7 @@ import {
   RTCSessionDescription,
   mediaDevices,
 } from 'react-native-webrtc';
+import Logo from '../src/components/Logo';
 
 const socket = io('http://localhost:3000');
 
@@ -119,6 +120,14 @@ export default function FaceScanScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      <Logo size={80} style={styles.logo} />
+      <Text style={styles.title}>
+        {mode === 'create' ? 'Create New Circle' : 'Join Circle'}
+      </Text>
+      <Text style={styles.subtitle}>
+        Position your face in the frame
+      </Text>
+      
       <Camera
         ref={cameraRef}
         style={styles.camera}
@@ -133,18 +142,19 @@ export default function FaceScanScreen({ route, navigation }) {
         }}
       >
         <View style={styles.overlay}>
-          <View style={styles.scanArea} />
-          <Text style={styles.instructions}>
-            {scanning ? 'Processing...' : 'Position your face in the circle'}
-          </Text>
-          <TouchableOpacity
-            style={styles.switchButton}
-            onPress={toggleCameraType}
-          >
-            <Text style={styles.switchButtonText}>
-              Switch Camera
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.unfocusedContainer}></View>
+          <View style={styles.focusedContainer}>
+            <View style={styles.unfocusedContainer}></View>
+            <View style={styles.focusedContainer}>
+              {scanning && (
+                <View style={styles.scanningIndicator}>
+                  <Text style={styles.scanningText}>Verifying...</Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.unfocusedContainer}></View>
+          </View>
+          <View style={styles.unfocusedContainer}></View>
         </View>
       </Camera>
     </View>
@@ -154,6 +164,26 @@ export default function FaceScanScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  logo: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginTop: 60,
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   camera: {
     flex: 1,
@@ -161,36 +191,25 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'transparent',
+    flexDirection: 'column',
+  },
+  unfocusedContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  focusedContainer: {
+    flex: 2,
+    flexDirection: 'row',
+  },
+  scanningIndicator: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  scanArea: {
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    borderWidth: 2,
-    borderColor: '#fff',
-    backgroundColor: 'transparent',
-  },
-  instructions: {
-    color: '#fff',
+  scanningText: {
+    color: 'white',
     fontSize: 18,
-    marginTop: 20,
-    textAlign: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 10,
-    borderRadius: 5,
-  },
-  switchButton: {
-    position: 'absolute',
-    bottom: 30,
-    right: 30,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 15,
-    borderRadius: 25,
-  },
-  switchButtonText: {
-    color: '#fff',
-    fontSize: 16,
+    fontWeight: '600',
   },
 }); 

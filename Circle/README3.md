@@ -1,3 +1,257 @@
+# Development and Testing Guide
+
+## Overview
+
+This document provides comprehensive information for developers working on the Circle application. For basic setup and features, see the [main README](README.md). For position system and VR features, see [README2.md](README2.md).
+
+## Development Setup
+
+### Environment Setup
+
+1. **Node.js Environment**
+   ```bash
+   # Install Node.js (v14 or higher)
+   nvm install 14
+   nvm use 14
+
+   # Install global dependencies
+   npm install -g expo-cli
+   npm install -g nodemon
+   ```
+
+2. **MongoDB Setup**
+   ```bash
+   # Install MongoDB
+   brew install mongodb-community
+
+   # Start MongoDB service
+   brew services start mongodb-community
+   ```
+
+3. **Project Setup**
+   ```bash
+   # Clone repository
+   git clone https://github.com/yourusername/circle.git
+   cd circle
+
+   # Install dependencies
+   npm install
+
+   # Set up environment variables
+   cp .env.example .env
+   ```
+
+### Development Workflow
+
+1. **Starting Development**
+   ```bash
+   # Start server
+   npm run dev
+
+   # Start mobile app
+   npm run mobile
+   ```
+
+2. **Code Quality**
+   ```bash
+   # Run linting
+   npm run lint
+
+   # Fix linting issues
+   npm run lint:fix
+
+   # Format code
+   npm run format
+   ```
+
+3. **Testing**
+   ```bash
+   # Run all tests
+   npm run test
+
+   # Run ESLint tests
+   npm run test:eslint
+
+   # Run with coverage
+   npm run test -- --coverage
+   ```
+
+## Project Structure
+
+### Directory Organization
+
+```
+circle/
+├── src/                    # Source code
+│   ├── components/        # React components
+│   ├── services/         # Business logic
+│   ├── utils/           # Helper functions
+│   ├── assets/         # Static resources
+│   └── __tests__/     # Test files
+├── screens/            # React Native screens
+├── server/           # Backend server
+├── ios/             # iOS native code
+├── android/        # Android native code
+└── docs/          # Documentation
+```
+
+### Component Organization
+
+See [Component Documentation](src/components/README.md) for detailed information about component structure and guidelines.
+
+### Service Layer
+
+See [Service Documentation](src/services/README.md) for detailed information about service organization and patterns.
+
+## Testing Guidelines
+
+### Test Types
+
+1. **Unit Tests**
+   - Component testing
+   - Service testing
+   - Utility function testing
+   - State management testing
+
+2. **Integration Tests**
+   - API integration
+   - Database operations
+   - WebRTC functionality
+   - VR features
+
+3. **Performance Tests**
+   - Load testing
+   - Memory usage
+   - Frame rate
+   - Network latency
+
+### Test Coverage Requirements
+
+- Branches: 80%
+- Functions: 80%
+- Lines: 80%
+- Statements: 80%
+
+### Testing Tools
+
+1. **Jest**
+   - Test runner
+   - Assertion library
+   - Mocking system
+   - Coverage reporting
+
+2. **ESLint**
+   - Code quality
+   - Style checking
+   - Best practices
+   - Custom rules
+
+3. **React Native Testing Library**
+   - Component testing
+   - User interaction
+   - Accessibility
+   - Performance
+
+## Development Best Practices
+
+### Code Style
+
+1. **JavaScript**
+   - Use ES6+ features
+   - Follow Airbnb style guide
+   - Use meaningful names
+   - Add JSDoc comments
+
+2. **React/React Native**
+   - Functional components
+   - Custom hooks
+   - Proper prop types
+   - Error boundaries
+
+3. **State Management**
+   - Use React hooks
+   - Context API
+   - Proper data flow
+   - Performance optimization
+
+### Performance
+
+1. **Optimization Techniques**
+   - Memoization
+   - Lazy loading
+   - Image optimization
+   - Bundle splitting
+
+2. **Monitoring**
+   - Performance metrics
+   - Error tracking
+   - Usage analytics
+   - Crash reporting
+
+## Deployment
+
+### Build Process
+
+1. **Android**
+   ```bash
+   # Build Android app
+   npm run android
+   ```
+
+2. **iOS**
+   ```bash
+   # Build iOS app
+   npm run ios
+   ```
+
+3. **Server**
+   ```bash
+   # Build server
+   npm run build:server
+   ```
+
+### Deployment Checklist
+
+See [RELEASE.md](RELEASE.md) for detailed deployment procedures and checklist.
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Development Environment**
+   - Node.js version
+   - MongoDB connection
+   - Environment variables
+   - Dependencies
+
+2. **Testing**
+   - Test environment
+   - Mock implementations
+   - Coverage issues
+   - Performance tests
+
+### Solutions
+
+1. **Environment Fixes**
+   - Check Node.js version
+   - Verify MongoDB
+   - Validate .env
+   - Clean dependencies
+
+2. **Test Fixes**
+   - Update test setup
+   - Fix mock data
+   - Adjust coverage
+   - Optimize tests
+
+## Related Documentation
+
+- [Main README](README.md) - Basic setup and features
+- [Position System and VR Features](README2.md) - Feature details
+- [Component Documentation](src/components/README.md) - Component details
+- [Service Documentation](src/services/README.md) - Service layer details
+- [Release Checklist](RELEASE.md) - Deployment procedures
+
 # Development Setup and SyncMode
 
 ## iOS Development Setup

@@ -1,10 +1,20 @@
 # Position System and VR Features
 
+## Overview
+
+This document details the Position System (PosSys) and VR features of the Circle application. For general setup and basic features, see the [main README](README.md). For development and testing information, see the [Development Guide](README3.md).
+
 ## Position System (PosSys)
 
 The PosSys feature implements a unique 3D coordinate system called Continuom, which maps positions to both a 2D map interface and a VR space using the device's current location and orientation.
 
 ### Continuom Coordinate System
+
+The Position System uses a unique Continuom coordinate system that combines:
+- Device orientation data
+- GPS coordinates
+- Relative positioning
+- Real-time updates
 
 The Continuom system defines 8 unique positions in 3D space with perspective-based scaling, centered around the Heart. Each position name follows the pattern [Side][Front/Back][Up/Down], where:
 - Side is either Left (L) or Right (R)
@@ -88,7 +98,6 @@ Perspective Scaling:
 - Back positions: 0.8 scale
 - Side positions: 0.9 scale
 - Depth factor increases from front (0) to back (1)
-```
 
 ### QubPix Visualization
 
@@ -181,6 +190,111 @@ The PosSys positions are visualized in VR using A-Frame:
 2. Tap "Share Position" to broadcast your position to circle members
 3. Other members will see your position in their VR view
 4. Tap "Stop Sharing" to end position sharing
+
+## VR Features
+
+### VR Space Visualization
+
+1. **Solar System**
+   - Sun and Moon visualization
+   - Real-time celestial positioning
+   - Interactive controls
+   - Astronomical accuracy
+
+2. **VRD (VR Display)**
+   - 3D space rendering
+   - User interaction
+   - Object manipulation
+   - Environment effects
+
+3. **Sync Features**
+   - Real-time synchronization
+   - State management
+   - Data persistence
+   - Error handling
+
+### Technical Details
+
+#### Solar System Service
+```javascript
+// Example usage
+const solarSystem = new SolarSystemService();
+solarSystem.updatePosition();
+```
+
+#### VRD Container
+```javascript
+// Example component
+<VRDContainer>
+  <SolarSystem />
+  <VRDSettings />
+</VRDContainer>
+```
+
+## Integration
+
+### Position System Integration
+1. Initialize PosSys service
+2. Configure location permissions
+3. Set up orientation listeners
+4. Handle position updates
+
+### VR Integration
+1. Initialize VR components
+2. Set up WebGL context
+3. Configure VR controllers
+4. Handle user input
+
+## Performance Considerations
+
+1. **Location Updates**
+   - Update frequency: 1Hz
+   - Accuracy: 10 meters
+   - Battery optimization
+   - Background updates
+
+2. **VR Rendering**
+   - Target FPS: 60
+   - Resolution: 1080p
+   - Latency: <20ms
+   - Memory management
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Location Services**
+   - GPS signal issues
+   - Permission problems
+   - Background limitations
+   - Battery drain
+
+2. **VR Display**
+   - Performance issues
+   - Sync problems
+   - Controller drift
+   - Calibration needs
+
+### Solutions
+
+1. **Location Fixes**
+   - Check GPS settings
+   - Verify permissions
+   - Optimize update frequency
+   - Monitor battery usage
+
+2. **VR Fixes**
+   - Check device compatibility
+   - Verify sync status
+   - Recalibrate controllers
+   - Monitor performance
+
+## Related Documentation
+
+- [Main README](README.md) - Basic setup and features
+- [Development Guide](README3.md) - Development and testing
+- [Component Documentation](src/components/README.md) - Component details
+- [Service Documentation](src/services/README.md) - Service layer details
 
 ---
 

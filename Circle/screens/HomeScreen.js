@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Logo from '../src/components/Logo';
 
 export default function HomeScreen({ navigation }) {
   const handleCreateCircle = () => {
@@ -16,6 +17,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <Logo size={150} />
       <Text style={styles.title}>Welcome to Circle</Text>
       <Text style={styles.subtitle}>Create or join a secure circle</Text>
       
