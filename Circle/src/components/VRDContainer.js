@@ -4,11 +4,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import VRD from './VRD';
 import VRDSettings from './VRDSettings';
 import VRDTutorial from './VRDTutorial';
+import SolarSystem from './SolarSystem';
 
 const VRDContainer = ({ onGesture, onPositionUpdate }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [isActive, setIsActive] = useState(false);
+  const [showSolarSystem, setShowSolarSystem] = useState(false);
 
   useEffect(() => {
     checkTutorialStatus();
@@ -42,14 +44,21 @@ const VRDContainer = ({ onGesture, onPositionUpdate }) => {
     setShowSettings(!showSettings);
   };
 
+  const toggleSolarSystem = () => {
+    setShowSolarSystem(!showSolarSystem);
+  };
+
   return (
     <View style={styles.container}>
       {isActive && (
-        <VRD
-          onGesture={handleGesture}
-          onPositionUpdate={handlePositionUpdate}
-          style={styles.vrd}
-        />
+        <>
+          <VRD
+            onGesture={handleGesture}
+            onPositionUpdate={handlePositionUpdate}
+            style={styles.vrd}
+          />
+          {showSolarSystem && <SolarSystem style={styles.solarSystem} />}
+        </>
       )}
 
       <TouchableOpacity 
@@ -57,6 +66,15 @@ const VRDContainer = ({ onGesture, onPositionUpdate }) => {
         onPress={toggleSettings}
       >
         <Text style={styles.settingsButtonText}>⚙️</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={styles.solarSystemButton}
+        onPress={toggleSolarSystem}
+      >
+        <Text style={styles.solarSystemButtonText}>
+          {showSolarSystem ? '🌍' : '🌌'}
+        </Text>
       </TouchableOpacity>
 
       <Modal
@@ -97,6 +115,13 @@ const styles = StyleSheet.create({
     left: '50%',
     transform: [{ translateX: -30 }, { translateY: -30 }]
   },
+  solarSystem: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0
+  },
   settingsButton: {
     position: 'absolute',
     top: 20,
@@ -110,7 +135,23 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#fff'
   },
+  solarSystemButton: {
+    position: 'absolute',
+    top: 20,
+    right: 70,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 150, 255, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff'
+  },
   settingsButtonText: {
+    fontSize: 20
+  },
+  solarSystemButtonText: {
     fontSize: 20
   },
   modalContainer: {
