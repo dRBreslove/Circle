@@ -505,17 +505,19 @@ If you encounter build issues:
 
 ### SyncMode
 
-When members of a circle meet, they can enter SyncMode to share a synchronized VR experience. The sync process follows these steps:
+SyncMode is a special feature that enables synchronized VR experiences when circle members physically meet in the same location. This feature requires specific physical setup:
 
-1. **Distance Confirmation**
-   - Members confirm their physical distances from each other
-   - The system calculates the relative positions of all members
-   - Each member's Continuom position is determined based on their physical location
+1. **Physical Setup**
+   - All members must be physically present in the same location
+   - Devices must be laid out side by side on a flat surface
+   - Devices must be at distance 0 (touching or very close to each other)
+   - This physical arrangement becomes the center (0,0,0,0,0,0,0,0) of the shared Continuom space
 
-2. **Sync Point Initialization**
-   - Once all distances are confirmed, members click the "Sync Scene" button
-   - The system establishes a shared sync point at (0,0,0,0,0,0,0,0)
-   - All subsequent positions and movements are calculated relative to this sync point
+2. **Sync Process**
+   - Members confirm their devices are properly laid out
+   - Each device's position is measured relative to the center point
+   - The system establishes the shared sync point at (0,0,0,0,0,0,0,0)
+   - All subsequent positions and movements are calculated relative to this physical center point
 
 3. **Synchronized VR Experience**
    - All members see the same A-Frame scene
@@ -532,9 +534,13 @@ When members of a circle meet, they can enter SyncMode to share a synchronized V
    - Circle strength affects visual effects and environment
 
 5. **Sync Requirements**
-   - All members must be within the maximum sync distance
+   - All members must be physically present
+   - Devices must be laid out side by side
+   - Devices must be at distance 0 (touching or very close)
    - Circle must be complete (all members connected)
    - All members must confirm their positions
    - Sync point must be established by all members
 
-The sync point (0,0,0,0,0,0,0,0) serves as the reference point for all subsequent movements and interactions in the shared VR space.
+The sync point (0,0,0,0,0,0,0,0) represents the physical center point where the devices are laid out, serving as the reference point for all subsequent movements and interactions in the shared VR space.
+
+Note: This feature is specifically designed for in-person gatherings where devices can be physically arranged together. It is not available for remote or virtual meetings.
