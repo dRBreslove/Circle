@@ -502,3 +502,39 @@ If you encounter build issues:
 3. Update Gradle sync
 4. Check SDK versions in build.gradle files
 5. Verify all required permissions in AndroidManifest.xml
+
+### SyncMode
+
+When members of a circle meet, they can enter SyncMode to share a synchronized VR experience. The sync process follows these steps:
+
+1. **Distance Confirmation**
+   - Members confirm their physical distances from each other
+   - The system calculates the relative positions of all members
+   - Each member's Continuom position is determined based on their physical location
+
+2. **Sync Point Initialization**
+   - Once all distances are confirmed, members click the "Sync Scene" button
+   - The system establishes a shared sync point at (0,0,0,0,0,0,0,0)
+   - All subsequent positions and movements are calculated relative to this sync point
+
+3. **Synchronized VR Experience**
+   - All members see the same A-Frame scene
+   - Member positions are represented as colored cubes
+   - Connection lines show the relationships between members
+   - Visual effects reflect the strength of the circle's connection:
+     - Member opacity shows individual sync strength
+     - Connection lines show relationship strength
+     - Scene environment changes based on overall circle strength
+
+4. **Real-time Updates**
+   - Position updates are broadcast to all members
+   - Scene updates maintain relative positions
+   - Circle strength affects visual effects and environment
+
+5. **Sync Requirements**
+   - All members must be within the maximum sync distance
+   - Circle must be complete (all members connected)
+   - All members must confirm their positions
+   - Sync point must be established by all members
+
+The sync point (0,0,0,0,0,0,0,0) serves as the reference point for all subsequent movements and interactions in the shared VR space.
