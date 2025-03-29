@@ -51,3 +51,7 @@ Please read our [Development Guide](README3.md) for details on our code of condu
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+[Continue to Position System & VR Guide](README2.md)

@@ -348,4 +348,4 @@ solarSystem.updatePosition();
 
 ---
 
-[Continue to Development Setup and SyncMode](README3.md) 
+[Continue to Development Guide](README3.md) 

@@ -313,4 +313,8 @@ SyncMode is a special feature that enables synchronized VR experiences when circ
 
 The sync point (0,0,0,0,0,0,0,0) represents the physical center point where the devices are laid out, serving as the reference point for all subsequent movements and interactions in the shared VR space.
 
-Note: This feature is specifically designed for in-person gatherings where devices can be physically arranged together. It is not available for remote or virtual meetings. 
+Note: This feature is specifically designed for in-person gatherings where devices can be physically arranged together. It is not available for remote or virtual meetings.
+
+---
+
+[Back to Main Documentation](README.md) 
