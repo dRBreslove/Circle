@@ -1,6 +1,6 @@
 # Position System & VR Features Guide
 
-![Circle App Logo](https://github.com/dRBreslove/Circle/blob/main/src/assets/images/circle-app-logo.png)
+![Circle App Logo](src/assets/images/circle-app-logo.png)
 
 This guide provides detailed information about the Position System and VR features in Circle.
 
@@ -44,9 +44,9 @@ The VR features use:
 
 ## Related Documentation
 
-- [Main Documentation](./README.md) - Overview and setup
-- [Development Guide](./README3.md) - Development and testing
-- [Release Checklist](./RELEASE.md) - Release process
+- [Main Documentation](README.md) - Overview and setup
+- [Development Guide](README3.md) - Development and testing
+- [Release Checklist](RELEASE.md) - Release process
 
 # Position System and VR Features
 
@@ -71,7 +71,7 @@ The Continuom system defines 8 unique positions in 3D space with perspective-bas
 - Front/Back indicates position relative to the Heart
 - Up/Down indicates vertical position relative to the Heart
 
-![PosSys Diagram](https://github.com/dRBreslove/Circle/blob/main/src/assets/images/possys-diagram.png)
+![PosSys Diagram](src/assets/images/possys-diagram.png)
 
 ```javascript
 const Continuom = [

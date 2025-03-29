@@ -1,6 +1,6 @@
 # Circle - WebRTC Group Chat App
 
-
+![Circle App Logo](src/assets/images/circle-app-logo.png)
 
 A hybrid mobile app that combines WebRTC group chat with face detection and location-based features.
 
@@ -18,9 +18,9 @@ Circle is a modern communication platform that enables real-time group video cha
 
 ## Documentation
 
-- [Main Documentation](./README.md) - This file
-- [Position System & VR Guide](./README2.md) - Detailed guide for location and VR features
-- [Development Guide](./README3.md) - Development setup and testing guidelines
+- [Main Documentation](README.md) - This file
+- [Position System & VR Guide](README2.md) - Detailed guide for location and VR features
+- [Development Guide](README3.md) - Development setup and testing guidelines
 
 ## Getting Started
 
@@ -46,7 +46,7 @@ Circle/
 
 ## Contributing
 
-Please read our [Development Guide](./README3.md) for details on our code of conduct and the process for submitting pull requests.
+Please read our [Development Guide](README3.md) for details on our code of conduct and the process for submitting pull requests.
 
 ## License
 

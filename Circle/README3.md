@@ -1,6 +1,6 @@
 # Development and Testing Guide
 
-![Circle App Logo](https://github.com/dRBreslove/Circle/blob/main/src/assets/images/circle-app-logo.png)
+![Circle App Logo](src/assets/images/circle-app-logo.png)
 
 This guide provides comprehensive information for developers working on Circle.
 
@@ -125,9 +125,9 @@ Circle/
 
 ## Related Documentation
 
-- [Main Documentation](./README.md) - Overview and setup
-- [Position System & VR Guide](./README2.md) - Feature details
-- [Release Checklist](./RELEASE.md) - Release process
+- [Main Documentation](README.md) - Overview and setup
+- [Position System & VR Guide](README2.md) - Feature details
+- [Release Checklist](RELEASE.md) - Release process
 
 # Development Setup and SyncMode
 
