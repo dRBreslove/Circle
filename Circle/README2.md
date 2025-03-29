@@ -1,3 +1,53 @@
+# Position System & VR Features Guide
+
+![Circle App Logo](./src/assets/images/circle-app-logo.png)
+
+This guide provides detailed information about the Position System and VR features in Circle.
+
+## Table of Contents
+- [Position System](#position-system)
+- [VR Features](#vr-features)
+- [Related Documentation](#related-documentation)
+
+## Position System
+
+The Position System in Circle allows users to share and view their locations in real-time.
+
+### Features
+- Real-time location tracking
+- Location accuracy display
+- Speed and heading information
+- Altitude data
+- Map visualization
+
+### Implementation
+The Position System uses:
+- `expo-location` for location services
+- `react-native-maps` for map display
+- WebSocket for real-time updates
+
+## VR Features
+
+Circle includes VR capabilities for an immersive experience.
+
+### Features
+- 3D visualization of participants
+- Real-time position updates in VR
+- Interactive VR environment
+- Cross-platform VR support
+
+### Implementation
+The VR features use:
+- WebVR for browser-based VR
+- Three.js for 3D rendering
+- WebSocket for real-time updates
+
+## Related Documentation
+
+- [Main Documentation](./README.md) - Overview and setup
+- [Development Guide](./README3.md) - Development and testing
+- [Release Checklist](./RELEASE.md) - Release process
+
 # Position System and VR Features
 
 ## Overview

@@ -1,138 +1,53 @@
 # Circle - WebRTC Group Chat App
 
-![Circle App Logo](src/assets/images/circle-app-logo.png)
+![Circle App Logo](./src/assets/images/circle-app-logo.png)
 
-A WebRTC-based hybrid app for secure group communication with VR capabilities.
+A hybrid mobile app that combines WebRTC group chat with face detection and location-based features.
 
-## Documentation
+## Overview
 
-This project's documentation is split into multiple files for better organization:
-
-1. [Main Features and Setup](README.md) (this file)
-2. [Position System and VR Features](README2.md)
-3. [Development and Testing Guide](README3.md)
+Circle is a modern communication platform that enables real-time group video chat with advanced features like face detection and location sharing. Built with React Native and Expo, it provides a seamless experience across iOS and Android devices.
 
 ## Features
 
-- Face scanning for user verification
-- Real-time location sharing
-- VR space visualization
-- Group communication
-- Solar system visualization in VR
+- **WebRTC Group Chat**: Real-time video and audio communication
+- **Face Detection**: Secure circle creation and joining using facial recognition
+- **Location Services**: Share and view participant locations
+- **VR Integration**: Virtual reality view of circle participants
+- **Cross-Platform**: Works on both iOS and Android
+
+## Documentation
+
+- [Main Documentation](./README.md) - This file
+- [Position System & VR Guide](./README2.md) - Detailed guide for location and VR features
+- [Development Guide](./README3.md) - Development setup and testing guidelines
 
 ## Getting Started
 
-### Prerequisites
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Start the development server: `npm start`
+4. Run on your device or simulator
 
-- Node.js (v14 or higher)
-- npm or yarn
-- Expo CLI
-- MongoDB
-- iOS Simulator (for Mac users) or Android Studio (for Android development)
+## Project Structure
 
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/circle.git
-cd circle
 ```
-
-2. Install dependencies:
-```bash
-npm install
+Circle/
+├── src/
+│   ├── components/     # Reusable UI components
+│   ├── screens/        # Screen components
+│   ├── assets/        # Images and other assets
+│   └── utils/         # Utility functions
+├── server/            # Backend server
+├── ios/              # iOS specific files
+├── android/          # Android specific files
+└── package.json      # Project dependencies
 ```
-
-3. Set up environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-4. Start the development server:
-```bash
-npm run dev
-```
-
-5. Start the mobile app:
-```bash
-npm run mobile
-```
-
-## Testing Guide
-
-### Running Tests
-
-The project includes several types of tests:
-
-1. **ESLint Tests**
-   ```bash
-   npm run test:eslint
-   ```
-   These tests verify that our ESLint configuration is working correctly and catching issues like:
-   - Inline styles
-   - Color literals
-   - Raw text outside Text components
-   - Proper React Native component structure
-
-2. **All Tests**
-   ```bash
-   npm run test
-   ```
-   This runs all test suites in the project.
-
-3. **MongoDB Connection Tests**
-   ```bash
-   node server/testMongoDB.js
-   ```
-   This test verifies the MongoDB connection and basic operations:
-   - Connection establishment
-   - Database access
-   - Collection operations
-   - Error handling
-   - Connection closure
-
-   The test will output:
-   - Connection status
-   - Database operations results
-   - Any errors encountered
-   - Cleanup confirmation
-
-   Example output:
-   ```
-   MongoDB Connection Test
-   ----------------------
-   Connecting to MongoDB...
-   Successfully connected to MongoDB
-   Testing database operations...
-   Successfully created test document
-   Successfully retrieved test document
-   Successfully updated test document
-   Successfully deleted test document
-   Successfully closed connection
-   Test completed successfully
-   ```
-
-   If you encounter connection issues:
-   1. Verify your MongoDB URI in `.env`
-   2. Check if MongoDB service is running
-   3. Ensure network connectivity
-   4. Verify database credentials
-   5. Check MongoDB Atlas IP whitelist (if using Atlas)
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Please read our [Development Guide](./README3.md) for details on our code of conduct and the process for submitting pull requests.
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Additional Documentation
-
-- [Position System and VR Features](README2.md) - Detailed information about the position system and VR features
-- [Development and Testing Guide](README3.md) - Comprehensive guide for developers

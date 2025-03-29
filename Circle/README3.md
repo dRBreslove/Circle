@@ -1,256 +1,133 @@
 # Development and Testing Guide
 
-## Overview
+![Circle App Logo](./src/assets/images/circle-app-logo.png)
 
-This document provides comprehensive information for developers working on the Circle application. For basic setup and features, see the [main README](README.md). For position system and VR features, see [README2.md](README2.md).
+This guide provides comprehensive information for developers working on Circle.
+
+## Table of Contents
+- [Development Setup](#development-setup)
+- [Development Workflow](#development-workflow)
+- [Project Structure](#project-structure)
+- [Testing Guidelines](#testing-guidelines)
+- [Development Best Practices](#development-best-practices)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
+- [Related Documentation](#related-documentation)
 
 ## Development Setup
 
 ### Environment Setup
+1. Node.js (v14 or higher)
+2. npm or yarn
+3. Expo CLI
+4. MongoDB
+5. iOS Simulator (Mac) or Android Studio
 
-1. **Node.js Environment**
-   ```bash
-   # Install Node.js (v14 or higher)
-   nvm install 14
-   nvm use 14
+### Project Setup
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up environment variables
+4. Start development server: `npm start`
 
-   # Install global dependencies
-   npm install -g expo-cli
-   npm install -g nodemon
-   ```
+## Development Workflow
 
-2. **MongoDB Setup**
-   ```bash
-   # Install MongoDB
-   brew install mongodb-community
+### Starting Development
+```bash
+npm run dev
+```
 
-   # Start MongoDB service
-   brew services start mongodb-community
-   ```
+### Code Quality
+```bash
+npm run lint
+npm run format
+```
 
-3. **Project Setup**
-   ```bash
-   # Clone repository
-   git clone https://github.com/yourusername/circle.git
-   cd circle
-
-   # Install dependencies
-   npm install
-
-   # Set up environment variables
-   cp .env.example .env
-   ```
-
-### Development Workflow
-
-1. **Starting Development**
-   ```bash
-   # Start server
-   npm run dev
-
-   # Start mobile app
-   npm run mobile
-   ```
-
-2. **Code Quality**
-   ```bash
-   # Run linting
-   npm run lint
-
-   # Fix linting issues
-   npm run lint:fix
-
-   # Format code
-   npm run format
-   ```
-
-3. **Testing**
-   ```bash
-   # Run all tests
-   npm run test
-
-   # Run ESLint tests
-   npm run test:eslint
-
-   # Run with coverage
-   npm run test -- --coverage
-   ```
+### Testing
+```bash
+npm run test
+```
 
 ## Project Structure
 
-### Directory Organization
-
 ```
-circle/
-├── src/                    # Source code
-│   ├── components/        # React components
-│   ├── services/         # Business logic
-│   ├── utils/           # Helper functions
-│   ├── assets/         # Static resources
-│   └── __tests__/     # Test files
-├── screens/            # React Native screens
-├── server/           # Backend server
-├── ios/             # iOS native code
-├── android/        # Android native code
-└── docs/          # Documentation
+Circle/
+├── src/
+│   ├── components/     # Reusable UI components
+│   ├── screens/        # Screen components
+│   ├── assets/        # Images and other assets
+│   └── utils/         # Utility functions
+├── server/            # Backend server
+├── ios/              # iOS specific files
+├── android/          # Android specific files
+└── package.json      # Project dependencies
 ```
-
-### Component Organization
-
-See [Component Documentation](src/components/README.md) for detailed information about component structure and guidelines.
-
-### Service Layer
-
-See [Service Documentation](src/services/README.md) for detailed information about service organization and patterns.
 
 ## Testing Guidelines
 
 ### Test Types
+- Unit Tests
+- Integration Tests
+- E2E Tests
+- ESLint Tests
 
-1. **Unit Tests**
-   - Component testing
-   - Service testing
-   - Utility function testing
-   - State management testing
+### Coverage Requirements
+- Minimum 80% coverage
+- Critical paths: 100% coverage
+- UI components: 90% coverage
 
-2. **Integration Tests**
-   - API integration
-   - Database operations
-   - WebRTC functionality
-   - VR features
-
-3. **Performance Tests**
-   - Load testing
-   - Memory usage
-   - Frame rate
-   - Network latency
-
-### Test Coverage Requirements
-
-- Branches: 80%
-- Functions: 80%
-- Lines: 80%
-- Statements: 80%
-
-### Testing Tools
-
-1. **Jest**
-   - Test runner
-   - Assertion library
-   - Mocking system
-   - Coverage reporting
-
-2. **ESLint**
-   - Code quality
-   - Style checking
-   - Best practices
-   - Custom rules
-
-3. **React Native Testing Library**
-   - Component testing
-   - User interaction
-   - Accessibility
-   - Performance
+### Tools
+- Jest for testing
+- ESLint for code quality
+- Prettier for formatting
 
 ## Development Best Practices
 
 ### Code Style
-
-1. **JavaScript**
-   - Use ES6+ features
-   - Follow Airbnb style guide
-   - Use meaningful names
-   - Add JSDoc comments
-
-2. **React/React Native**
-   - Functional components
-   - Custom hooks
-   - Proper prop types
-   - Error boundaries
-
-3. **State Management**
-   - Use React hooks
-   - Context API
-   - Proper data flow
-   - Performance optimization
+- Follow ESLint rules
+- Use Prettier for formatting
+- Write meaningful comments
+- Follow React Native best practices
 
 ### Performance
-
-1. **Optimization Techniques**
-   - Memoization
-   - Lazy loading
-   - Image optimization
-   - Bundle splitting
-
-2. **Monitoring**
-   - Performance metrics
-   - Error tracking
-   - Usage analytics
-   - Crash reporting
+- Optimize images
+- Use proper React hooks
+- Implement proper cleanup
+- Monitor bundle size
 
 ## Deployment
 
 ### Build Process
+1. Android: `npm run build:android`
+2. iOS: `npm run build:ios`
+3. Server: `npm run build:server`
 
-1. **Android**
-   ```bash
-   # Build Android app
-   npm run android
-   ```
-
-2. **iOS**
-   ```bash
-   # Build iOS app
-   npm run ios
-   ```
-
-3. **Server**
-   ```bash
-   # Build server
-   npm run build:server
-   ```
-
-### Deployment Checklist
-
-See [RELEASE.md](RELEASE.md) for detailed deployment procedures and checklist.
+### Checklist
+- [ ] Run all tests
+- [ ] Check ESLint
+- [ ] Update version
+- [ ] Build assets
+- [ ] Deploy server
+- [ ] Deploy app
 
 ## Troubleshooting
 
 ### Common Issues
-
-1. **Development Environment**
-   - Node.js version
-   - MongoDB connection
-   - Environment variables
-   - Dependencies
-
-2. **Testing**
-   - Test environment
-   - Mock implementations
-   - Coverage issues
-   - Performance tests
+1. Build failures
+2. Test failures
+3. ESLint errors
+4. Performance issues
 
 ### Solutions
-
-1. **Environment Fixes**
-   - Check Node.js version
-   - Verify MongoDB
-   - Validate .env
-   - Clean dependencies
-
-2. **Test Fixes**
-   - Update test setup
-   - Fix mock data
-   - Adjust coverage
-   - Optimize tests
+- Clear cache
+- Update dependencies
+- Check environment
+- Review logs
 
 ## Related Documentation
 
-- [Main README](README.md) - Basic setup and features
-- [Position System and VR Features](README2.md) - Feature details
-- [Component Documentation](src/components/README.md) - Component details
-- [Service Documentation](src/services/README.md) - Service layer details
-- [Release Checklist](RELEASE.md) - Deployment procedures
+- [Main Documentation](./README.md) - Overview and setup
+- [Position System & VR Guide](./README2.md) - Feature details
+- [Release Checklist](./RELEASE.md) - Release process
 
 # Development Setup and SyncMode
 
