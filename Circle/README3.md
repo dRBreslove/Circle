@@ -1,6 +1,6 @@
 # Development and Testing Guide
 
-![Circle App Logo](./src/assets/images/circle-app-logo.png)
+![Circle App Logo](https://github.com/dRBreslove/Circle/blob/main/src/assets/images/circle-app-logo.png)
 
 This guide provides comprehensive information for developers working on Circle.
 
