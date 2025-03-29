@@ -111,36 +111,16 @@ The Continuom system defines 8 unique positions in 3D space with perspective-bas
 ![PosSys Diagram](src/assets/images/possys-diagram.png)
 
 ```javascript
-// MongoDB Schema for Continuom
-const ContinuomSchema = {
-  id: Number,          // Unique identifier (0-7)
-  name: String,        // Position name (e.g., 'RightFrontUp')
-  cor: {
-    x: Number,         // X coordinate
-    y: Number,         // Y coordinate
-    z: Number          // Z coordinate
+const Continuom = [
+  // Right side positions with perspective scaling
+  { 
+    id: 0, 
+    name: 'RightFrontUp', 
+    cor: { x: 0, y: 0, z: 0 },
+    perspective: { scale: 1, depth: 0 }
   },
-  perspective: {
-    scale: Number,     // Base scaling factor (1 for front, 0.8 for back)
-    depth: Number      // Depth factor (0 for front, 1 for back)
-  },
-  circleId: String,    // Reference to the circle this Continuom belongs to
-  memberId: String,    // Reference to the member who owns this Continuom
-  createdAt: Date,     // When the Continuom was created
-  updatedAt: Date      // When the Continuom was last updated
-};
-
-// Example Continuom document in MongoDB
-{
-  id: 0,
-  name: 'RightFrontUp',
-  cor: { x: 0, y: 0, z: 0 },
-  perspective: { scale: 1, depth: 0 },
-  circleId: 'circle123',
-  memberId: 'member456',
-  createdAt: ISODate('2024-03-28T12:00:00Z'),
-  updatedAt: ISODate('2024-03-28T12:00:00Z')
-}
+  // ... other positions
+];
 ```
 
 Each position is defined by:
