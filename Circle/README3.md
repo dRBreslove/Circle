@@ -1,6 +1,6 @@
 # Development and Testing Guide
 
-![Circle App Logo](src/assets/images/circle-app-logo.png)
+<img src="src/assets/images/circle-app-logo.png" alt="Circle App Logo" width="100">
 
 This guide provides comprehensive information for developers working on Circle.
 
@@ -128,6 +128,10 @@ Circle/
 - [Main Documentation](README.md) - Overview and setup
 - [Position System & VR Guide](README2.md) - Feature details
 - [Release Checklist](RELEASE.md) - Release process
+
+---
+
+[Back to Main Documentation](README.md)
 
 # Development Setup and SyncMode
 
@@ -291,7 +295,7 @@ SyncMode is a special feature that enables synchronized VR experiences when circ
   - Member opacity shows individual sync strength
   - Connection lines show relationship strength
   - Scene environment changes based on overall circle strength
-- Continuom Grid Toggle:
+- VRhC Grid Toggle:
   - Tap the "Toggle Grid" button to show/hide the Continuom grid
   - Grid visibility is synchronized between all members
   - Grid state persists during the sync session
@@ -313,8 +317,4 @@ SyncMode is a special feature that enables synchronized VR experiences when circ
 
 The sync point (0,0,0,0,0,0,0,0) represents the physical center point where the devices are laid out, serving as the reference point for all subsequent movements and interactions in the shared VR space.
 
-Note: This feature is specifically designed for in-person gatherings where devices can be physically arranged together. It is not available for remote or virtual meetings.
-
----
-
-[Back to Main Documentation](README.md) 
+Note: This feature is specifically designed for in-person gatherings where devices can be physically arranged together. It is not available for remote or virtual meetings. 

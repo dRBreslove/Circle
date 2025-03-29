@@ -1,6 +1,6 @@
 # Circle - WebRTC Group Chat App
 
-![Circle App Logo](src/assets/images/circle-app-logo.png)
+<img src="src/assets/images/circle-app-logo.png" alt="Circle App Logo" width="100">
 
 A hybrid mobile app that combines WebRTC group chat with face detection and location-based features.
 
