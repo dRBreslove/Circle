@@ -564,3 +564,156 @@ SyncMode is a special feature that enables synchronized VR experiences when circ
 The sync point (0,0,0,0,0,0,0,0) represents the physical center point where the devices are laid out, serving as the reference point for all subsequent movements and interactions in the shared VR space.
 
 Note: This feature is specifically designed for in-person gatherings where devices can be physically arranged together. It is not available for remote or virtual meetings.
+
+# VRD (VR Device) System
+
+A comprehensive VR device control system for React Native applications, providing gesture recognition, motion tracking, and customizable settings.
+
+## Version 1.0.1
+
+### New Features
+- Enhanced calibration system with multiple modes:
+  - Quick calibration for rapid setup
+  - Full calibration with customizable duration and samples
+  - Dynamic calibration that adapts to movement patterns
+- Gesture recording and playback:
+  - Record custom gestures with customizable buffer size
+  - Playback recorded gestures with adjustable speed
+  - Save and manage multiple recorded gestures
+- Improved visual feedback:
+  - Recording status indicator
+  - Playback status display
+  - Enhanced calibration status feedback
+- Additional settings options:
+  - Calibration interval control
+  - Recording buffer size adjustment
+  - Playback speed control
+  - Calibration type selection
+
+### Features
+- Real-time motion tracking using device accelerometer
+- Gesture recognition system:
+  - Basic gestures (swipes, tilts, jabs)
+  - Complex gestures (circles, figure-eights, waves)
+  - Custom gesture recording and playback
+- Visual feedback system:
+  - Position and rotation animations
+  - Gesture text display
+  - Battery level indicator
+  - Status indicators for recording and playback
+- Haptic feedback for gestures and events
+- Comprehensive settings panel:
+  - Sensitivity adjustment
+  - Gesture threshold configuration
+  - Visual feedback customization
+  - Calibration options
+  - Recording and playback settings
+- Tutorial system for new users
+- Battery monitoring and warnings
+
+### Installation
+
+```bash
+npm install @react-native-community/vrd
+# or
+yarn add @react-native-community/vrd
+```
+
+### Usage
+
+```javascript
+import { VRD, VRDSettings, VRDTutorial } from '@react-native-community/vrd';
+
+// In your component:
+const YourComponent = () => {
+  const handleGesture = (gesture) => {
+    console.log('Detected gesture:', gesture);
+  };
+
+  const handlePositionUpdate = (data) => {
+    console.log('Position update:', data);
+  };
+
+  return (
+    <View style={styles.container}>
+      <VRD
+        onGesture={handleGesture}
+        onPositionUpdate={handlePositionUpdate}
+      />
+      <VRDSettings />
+      <VRDTutorial />
+    </View>
+  );
+};
+```
+
+### Components
+
+#### VRD
+The main component that handles device tracking and gesture recognition.
+
+Props:
+- `onGesture`: Callback function for gesture events
+- `onPositionUpdate`: Callback function for position updates
+- `style`: Custom styles for the VRD component
+
+#### VRDSettings
+A comprehensive settings panel for customizing the VRD behavior.
+
+Features:
+- Basic settings (sensitivity, update interval)
+- Gesture settings (thresholds, history size)
+- Visual settings (glow intensity, battery warning)
+- Calibration options (type, interval, duration)
+- Recording and playback settings
+- Gesture management
+
+#### VRDTutorial
+An interactive tutorial component for new users.
+
+Features:
+- Step-by-step guidance
+- Interactive demonstrations
+- Progress tracking
+- Skip option
+
+### Gesture Types
+
+#### Basic Gestures
+- `SWIPE_LEFT`, `SWIPE_RIGHT`
+- `SWIPE_UP`, `SWIPE_DOWN`
+- `SWIPE_FORWARD`, `SWIPE_BACKWARD`
+- `TILT_LEFT`, `TILT_RIGHT`
+- `TILT_UP`, `TILT_DOWN`
+- `JAB_LEFT`, `JAB_RIGHT`
+- `JAB_UP`, `JAB_DOWN`
+- `JAB_FORWARD`, `JAB_BACKWARD`
+
+#### Complex Gestures
+- `CIRCLE`
+- `FIGURE_EIGHT`
+- `WAVE`
+
+### Calibration Types
+
+#### Quick Calibration
+- Rapid calibration for basic setup
+- Suitable for quick adjustments
+
+#### Full Calibration
+- Comprehensive calibration with multiple samples
+- Customizable duration and sample count
+- Most accurate for precise tracking
+
+#### Dynamic Calibration
+- Adaptive calibration based on movement patterns
+- Automatically adjusts to user's movement style
+- Best for varying usage conditions
+
+### Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+### License
+
+MIT License - see LICENSE file for details

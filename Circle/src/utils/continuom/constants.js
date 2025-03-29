@@ -79,4 +79,22 @@ export const POSITION_COLORS = {
 export const SYNC_DISTANCE = {
   MIN: 0,  // Devices must be touching
   MAX: 5   // Maximum distance in centimeters
+};
+
+// Auto Sync Mode Constants
+export const AUTO_SYNC = {
+  CENTER_THRESHOLD: 0.1,  // Threshold for considering a dot centered
+  SOUND_FILE: 'sync_success.mp3',
+  CAMERA: {
+    BACK: 'back',
+    FRONT: 'front'
+  },
+  DISPLAY_TYPES: {
+    MAIN: 'mainDisplay',
+    FLOATING: 'floatingFrame'
+  },
+  DOT_COLORS: {
+    BACKGROUND: '#FFFFFF',
+    DOT: '#FF0000'
+  }
 }; 
