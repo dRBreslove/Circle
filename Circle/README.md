@@ -108,6 +108,8 @@ The Continuom system defines 8 unique positions in 3D space with perspective-bas
 - Front/Back indicates position relative to the Heart
 - Up/Down indicates vertical position relative to the Heart
 
+![PosSys Diagram](src/assets/images/possys-diagram.png.png)
+
 ```javascript
 const Continuom = [
   // Right side positions with perspective scaling
