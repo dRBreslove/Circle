@@ -190,3 +190,152 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 [Continue to Position System and VR Features](README2.md)
+
+## Testing Guide
+
+### Running Tests
+
+The project includes several types of tests:
+
+1. **ESLint Tests**
+   ```bash
+   npm run test:eslint
+   ```
+   These tests verify that our ESLint configuration is working correctly and catching issues like:
+   - Inline styles
+   - Color literals
+   - Raw text outside Text components
+   - Proper React Native component structure
+
+2. **All Tests**
+   ```bash
+   npm run test
+   ```
+   This runs all test suites in the project.
+
+3. **MongoDB Connection Tests**
+   ```bash
+   node server/testMongoDB.js
+   ```
+   This test verifies the MongoDB connection and basic operations:
+   - Connection establishment
+   - Database access
+   - Collection operations
+   - Error handling
+   - Connection closure
+
+   The test will output:
+   - Connection status
+   - Database operations results
+   - Any errors encountered
+   - Cleanup confirmation
+
+   Example output:
+   ```
+   MongoDB Connection Test
+   ----------------------
+   Connecting to MongoDB...
+   Successfully connected to MongoDB
+   Testing database operations...
+   Successfully created test document
+   Successfully retrieved test document
+   Successfully updated test document
+   Successfully deleted test document
+   Successfully closed connection
+   Test completed successfully
+   ```
+
+   If you encounter connection issues:
+   1. Verify your MongoDB URI in `.env`
+   2. Check if MongoDB service is running
+   3. Ensure network connectivity
+   4. Verify database credentials
+   5. Check MongoDB Atlas IP whitelist (if using Atlas)
+
+### Writing Tests
+
+#### ESLint Tests
+
+ESLint tests are located in `src/__tests__/eslint.test.js`. They verify that our linting rules are working as expected. Here's how to write a new ESLint test:
+
+```javascript
+test('should catch specific linting issue', async () => {
+  const codeWithIssue = `
+    // Your test code here
+  `;
+
+  const results = await eslint.lintText(codeWithIssue);
+  expect(results[0].messages).toContainEqual(
+    expect.objectContaining({
+      ruleId: 'rule-name',
+    })
+  );
+});
+```
+
+#### Component Tests
+
+Component tests should be placed in `src/__tests__/components/`. Example structure:
+
+```javascript
+import React from 'react';
+import { render } from '@testing-library/react-native';
+import YourComponent from '../components/YourComponent';
+
+describe('YourComponent', () => {
+  it('renders correctly', () => {
+    const { getByText } = render(<YourComponent />);
+    expect(getByText('Expected Text')).toBeTruthy();
+  });
+});
+```
+
+#### Service Tests
+
+Service tests should be placed in `src/__tests__/services/`. Example structure:
+
+```javascript
+import YourService from '../services/YourService';
+
+describe('YourService', () => {
+  it('performs expected operation', () => {
+    const result = YourService.someMethod();
+    expect(result).toBe(expectedValue);
+  });
+});
+```
+
+### Test Coverage
+
+The project maintains minimum coverage requirements:
+- Branches: 80%
+- Functions: 80%
+- Lines: 80%
+- Statements: 80%
+
+To check coverage, run:
+```bash
+npm run test -- --coverage
+```
+
+### Best Practices
+
+1. **Test Organization**
+   - Group related tests using `describe` blocks
+   - Use clear, descriptive test names
+   - Follow the pattern: "should [expected behavior] when [condition]"
+
+2. **Mocking**
+   - Use the provided mock implementations in `jest.setup.js`
+   - Create additional mocks as needed in test files
+   - Mock external dependencies consistently
+
+3. **Assertions**
+   - Use specific assertions (e.g., `toBeTruthy()` instead of `toBe(true)`)
+   - Include meaningful error messages
+   - Test both success and failure cases
+
+4. **Performance**
+   - Keep tests focused and isolated
+   - Avoid unnecessary setup/teardown
+   - Use appropriate test timeouts
