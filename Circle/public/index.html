@@ -11,17 +11,20 @@
 <body>
     <div class="app-container">
         <!-- Navigation -->
-        <nav class="main-nav">
-            <div class="nav-brand">
-                <h1>Circle</h1>
+        <nav class="nav-bar">
+            <div class="nav-left">
+                <img src="/src/assets/images/logo.png" alt="Circle Logo" class="logo">
+                <div class="search-box">
+                    <i class="material-icons">search</i>
+                    <input type="text" placeholder="Search groups, messages, or users">
+                </div>
             </div>
-            <div class="nav-actions">
-                <button id="createGroupBtn" class="btn primary">
-                    <span class="material-icons">group_add</span>
-                    Create Group
+            <div class="nav-right">
+                <button class="icon-button" id="createGroupBtn">
+                    <i class="material-icons">group_add</i>
                 </button>
-                <button id="profileBtn" class="btn icon">
-                    <span class="material-icons">account_circle</span>
+                <button class="icon-button" id="profileBtn">
+                    <i class="material-icons">account_circle</i>
                 </button>
             </div>
         </nav>

@@ -1,386 +1,191 @@
-// Application state
-const state = {
-    currentUser: null,
-    currentGroup: null,
-    groups: [],
-    messages: [],
-    participants: [],
-    isInCall: false,
-    callType: null, // 'video' or 'voice'
-    isMuted: false,
-    isVideoEnabled: true
-};
-
-// DOM Elements
-const elements = {
-    // Navigation
-    createGroupBtn: document.getElementById('createGroupBtn'),
-    profileBtn: document.getElementById('profileBtn'),
-    
-    // Sections
-    groupsSection: document.getElementById('groupsSection'),
-    chatSection: document.getElementById('chatSection'),
-    videoCallSection: document.getElementById('videoCallSection'),
-    voiceCallSection: document.getElementById('voiceCallSection'),
-    profileSection: document.getElementById('profileSection'),
-    
-    // Groups
-    groupSearch: document.getElementById('groupSearch'),
-    groupsList: document.getElementById('groupsList'),
-    
-    // Chat
-    currentGroupName: document.getElementById('currentGroupName'),
-    participantCount: document.getElementById('participantCount'),
-    messagesList: document.getElementById('messagesList'),
-    messageInput: document.getElementById('messageInput'),
-    sendBtn: document.getElementById('sendBtn'),
-    attachBtn: document.getElementById('attachBtn'),
-    
-    // Call Controls
-    videoCallBtn: document.getElementById('videoCallBtn'),
-    voiceCallBtn: document.getElementById('voiceCallBtn'),
-    muteBtn: document.getElementById('muteBtn'),
-    videoBtn: document.getElementById('videoBtn'),
-    endCallBtn: document.getElementById('endCallBtn'),
-    
-    // Profile
-    profileImage: document.getElementById('profileImage'),
-    profileName: document.getElementById('profileName'),
-    profileEmail: document.getElementById('profileEmail'),
-    profileBio: document.getElementById('profileBio'),
-    saveProfileBtn: document.getElementById('saveProfileBtn'),
-    
-    // Modals
-    createGroupModal: document.getElementById('createGroupModal'),
-    joinGroupModal: document.getElementById('joinGroupModal'),
-    groupNameInput: document.getElementById('groupNameInput'),
-    groupDescInput: document.getElementById('groupDescInput'),
-    memberSearch: document.getElementById('memberSearch'),
-    memberSearchResults: document.getElementById('memberSearchResults'),
-    selectedMembers: document.getElementById('selectedMembers'),
-    groupCodeInput: document.getElementById('groupCodeInput')
-};
-
-// Initialize application
-async function initApp() {
-    try {
-        // Initialize services
-        await AuthService.init();
-        await WebSocketService.init();
-        await WebRTCService.init();
-        
-        // Load user data
-        state.currentUser = await AuthService.getCurrentUser();
-        if (!state.currentUser) {
-            window.location.href = '/login.html';
-            return;
-        }
-        
-        // Load user's groups
-        state.groups = await GroupService.getUserGroups();
-        
-        // Setup event listeners
-        setupEventListeners();
-        
-        // Render initial view
-        renderGroups();
-        
-        // Setup WebSocket listeners
-        setupWebSocketListeners();
-    } catch (error) {
-        console.error('Error initializing app:', error);
-        showError('Failed to initialize application');
-    }
-}
-
-// Event Listeners
-function setupEventListeners() {
-    // Navigation
-    elements.createGroupBtn.addEventListener('click', showCreateGroupModal);
-    elements.profileBtn.addEventListener('click', showProfile);
-    
-    // Chat
-    elements.messageInput.addEventListener('keypress', handleMessageInput);
-    elements.sendBtn.addEventListener('click', sendMessage);
-    elements.attachBtn.addEventListener('click', handleAttachment);
-    
-    // Calls
-    elements.videoCallBtn.addEventListener('click', () => startCall('video'));
-    elements.voiceCallBtn.addEventListener('click', () => startCall('voice'));
-    elements.muteBtn.addEventListener('click', toggleMute);
-    elements.videoBtn.addEventListener('click', toggleVideo);
-    elements.endCallBtn.addEventListener('click', endCall);
-    
-    // Profile
-    elements.saveProfileBtn.addEventListener('click', saveProfile);
-    elements.profileImage.addEventListener('click', () => {
-        document.getElementById('avatarInput').click();
-    });
-    
-    // Modals
-    document.querySelectorAll('.close-btn').forEach(btn => {
-        btn.addEventListener('click', hideModals);
-    });
-    
-    // Group creation
-    document.getElementById('createGroupSubmit').addEventListener('click', createGroup);
-    document.getElementById('joinGroupSubmit').addEventListener('click', joinGroup);
-    
-    // Search
-    elements.groupSearch.addEventListener('input', debounce(handleGroupSearch, 300));
-    elements.memberSearch.addEventListener('input', debounce(handleMemberSearch, 300));
-}
-
-// WebSocket Listeners
-function setupWebSocketListeners() {
-    WebSocketService.on('group_update', handleGroupUpdate);
-    WebSocketService.on('message', handleNewMessage);
-    WebSocketService.on('participant_join', handleParticipantJoin);
-    WebSocketService.on('participant_leave', handleParticipantLeave);
-    WebSocketService.on('call_request', handleCallRequest);
-    WebSocketService.on('call_accepted', handleCallAccepted);
-    WebSocketService.on('call_rejected', handleCallRejected);
-    WebSocketService.on('call_ended', handleCallEnded);
-}
-
-// UI Updates
-function renderGroups() {
-    elements.groupsList.innerHTML = '';
-    state.groups.forEach(group => {
-        const groupElement = createGroupElement(group);
-        elements.groupsList.appendChild(groupElement);
-    });
-}
-
-function createGroupElement(group) {
-    const div = document.createElement('div');
-    div.className = 'group-card';
-    div.innerHTML = `
-        <div class="group-info">
-            <h3>${group.name}</h3>
-            <p>${group.description || 'No description'}</p>
-            <span>${group.participants.length} participants</span>
-        </div>
-        <div class="group-actions">
-            <button class="btn icon" onclick="joinGroup('${group.id}')">
-                <span class="material-icons">group_add</span>
-            </button>
-            <button class="btn icon" onclick="startChat('${group.id}')">
-                <span class="material-icons">chat</span>
-            </button>
-        </div>
-    `;
-    return div;
-}
-
-function renderMessages() {
-    elements.messagesList.innerHTML = '';
-    state.messages.forEach(message => {
-        const messageElement = createMessageElement(message);
-        elements.messagesList.appendChild(messageElement);
-    });
-    elements.messagesList.scrollTop = elements.messagesList.scrollHeight;
-}
-
-function createMessageElement(message) {
-    const div = document.createElement('div');
-    div.className = `message ${message.userId === state.currentUser.id ? 'sent' : 'received'}`;
-    div.innerHTML = `
-        <div class="message-content">
-            <div class="message-header">
-                <span class="message-sender">${message.userName}</span>
-                <span class="message-time">${formatTime(message.timestamp)}</span>
-            </div>
-            <div class="message-text">${message.text}</div>
-            ${message.attachment ? `<div class="message-attachment">${message.attachment}</div>` : ''}
-        </div>
-    `;
-    return div;
-}
-
-// Navigation
-function showProfile() {
-    hideAllSections();
-    elements.profileSection.classList.add('active');
-    loadProfileData();
-}
-
-function showChat(groupId) {
-    hideAllSections();
-    elements.chatSection.classList.add('active');
-    loadChatData(groupId);
-}
-
-function showVideoCall() {
-    hideAllSections();
-    elements.videoCallSection.classList.add('active');
-    startVideoCall();
-}
-
-function showVoiceCall() {
-    hideAllSections();
-    elements.voiceCallSection.classList.add('active');
-    startVoiceCall();
-}
-
-function hideAllSections() {
-    document.querySelectorAll('.section').forEach(section => {
-        section.classList.remove('active');
-    });
-}
-
-// Group Management
-async function createGroup() {
-    try {
-        const groupData = {
-            name: elements.groupNameInput.value,
-            description: elements.groupDescInput.value,
-            members: getSelectedMembers()
+// Main Application Class
+class CircleApp {
+    constructor() {
+        this.state = {
+            currentUser: null,
+            currentGroup: null,
+            groups: [],
+            messages: [],
+            participants: [],
+            isInCall: false,
+            callType: null,
+            isMuted: false,
+            isVideoEnabled: true
         };
-        
-        const newGroup = await GroupService.createGroup(groupData);
-        state.groups.push(newGroup);
-        renderGroups();
-        hideModals();
-        showChat(newGroup.id);
-    } catch (error) {
-        console.error('Error creating group:', error);
-        showError('Failed to create group');
-    }
-}
 
-async function joinGroup(groupId) {
-    try {
-        const group = await GroupService.joinGroup(groupId);
-        state.groups.push(group);
-        renderGroups();
-        showChat(groupId);
-    } catch (error) {
-        console.error('Error joining group:', error);
-        showError('Failed to join group');
-    }
-}
+        this.services = {
+            ws: new WebSocketService(),
+            webrtc: new WebRTCService(),
+            auth: new AuthService(),
+            group: new GroupService(),
+            chat: new ChatService()
+        };
 
-// Chat Management
-async function sendMessage() {
-    const text = elements.messageInput.value.trim();
-    if (!text) return;
-    
-    try {
-        const message = await ChatService.sendMessage(state.currentGroup.id, text);
-        state.messages.push(message);
-        renderMessages();
-        elements.messageInput.value = '';
-    } catch (error) {
-        console.error('Error sending message:', error);
-        showError('Failed to send message');
-    }
-}
+        this.components = {
+            groups: new GroupsComponent(this),
+            chat: new ChatComponent(this),
+            call: new CallComponent(this),
+            profile: new ProfileComponent(this)
+        };
 
-async function handleAttachment() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*,video/*,audio/*';
-    
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
+        this.init();
+    }
+
+    async init() {
         try {
-            const attachment = await ChatService.uploadAttachment(file);
-            const message = await ChatService.sendMessage(state.currentGroup.id, '', attachment);
-            state.messages.push(message);
-            renderMessages();
+            // Initialize services
+            await this.services.auth.init();
+            await this.services.ws.init();
+            await this.services.webrtc.init();
+
+            // Load user data
+            await this.loadUserData();
+
+            // Setup event listeners
+            this.setupEventListeners();
+
+            // Setup WebSocket listeners
+            this.setupWebSocketListeners();
+
+            // Render initial view
+            this.renderInitialView();
         } catch (error) {
-            console.error('Error uploading attachment:', error);
-            showError('Failed to upload attachment');
+            console.error('Failed to initialize app:', error);
+            this.showError('Failed to initialize application');
         }
-    };
-    
-    input.click();
-}
+    }
 
-// Call Management
-async function startCall(type) {
-    try {
-        state.callType = type;
-        state.isInCall = true;
+    async loadUserData() {
+        try {
+            const userData = await this.services.auth.getCurrentUser();
+            this.state.currentUser = userData;
+            await this.components.profile.loadProfile(userData);
+        } catch (error) {
+            console.error('Failed to load user data:', error);
+            this.showError('Failed to load user data');
+        }
+    }
+
+    setupEventListeners() {
+        // Navigation
+        document.getElementById('createGroupBtn').addEventListener('click', () => this.components.groups.showCreateModal());
+        document.getElementById('profileBtn').addEventListener('click', () => this.components.profile.show());
+
+        // Search
+        const searchInput = document.querySelector('.search-box input');
+        searchInput.addEventListener('input', debounce((e) => this.handleSearch(e.target.value), 300));
+
+        // Modal close buttons
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.hideAllModals());
+        });
+    }
+
+    setupWebSocketListeners() {
+        this.services.ws.on('group:update', (data) => this.handleGroupUpdate(data));
+        this.services.ws.on('message:new', (data) => this.handleNewMessage(data));
+        this.services.ws.on('participant:join', (data) => this.handleParticipantJoin(data));
+        this.services.ws.on('participant:leave', (data) => this.handleParticipantLeave(data));
+        this.services.ws.on('call:request', (data) => this.handleCallRequest(data));
+    }
+
+    handleGroupUpdate(data) {
+        this.components.groups.updateGroup(data);
+    }
+
+    handleNewMessage(data) {
+        this.components.chat.addMessage(data);
+    }
+
+    handleParticipantJoin(data) {
+        this.components.chat.addParticipant(data);
+    }
+
+    handleParticipantLeave(data) {
+        this.components.chat.removeParticipant(data);
+    }
+
+    handleCallRequest(data) {
+        this.components.call.handleIncomingCall(data);
+    }
+
+    handleSearch(query) {
+        if (!query.trim()) return;
         
-        if (type === 'video') {
-            showVideoCall();
-        } else {
-            showVoiceCall();
-        }
-        
-        await WebRTCService.startCall(state.currentGroup.id, type);
-    } catch (error) {
-        console.error('Error starting call:', error);
-        showError('Failed to start call');
-    }
-}
-
-function toggleMute() {
-    state.isMuted = !state.isMuted;
-    WebRTCService.setMute(state.isMuted);
-    elements.muteBtn.querySelector('.material-icons').textContent = 
-        state.isMuted ? 'mic_off' : 'mic';
-}
-
-function toggleVideo() {
-    state.isVideoEnabled = !state.isVideoEnabled;
-    WebRTCService.setVideoEnabled(state.isVideoEnabled);
-    elements.videoBtn.querySelector('.material-icons').textContent = 
-        state.isVideoEnabled ? 'videocam' : 'videocam_off';
-}
-
-async function endCall() {
-    try {
-        await WebRTCService.endCall();
-        state.isInCall = false;
-        showChat(state.currentGroup.id);
-    } catch (error) {
-        console.error('Error ending call:', error);
-        showError('Failed to end call');
-    }
-}
-
-// Profile Management
-async function loadProfileData() {
-    try {
-        const profile = await AuthService.getUserProfile();
-        elements.profileName.value = profile.name;
-        elements.profileEmail.value = profile.email;
-        elements.profileBio.value = profile.bio || '';
-        if (profile.avatar) {
-            elements.profileImage.src = profile.avatar;
-        }
-    } catch (error) {
-        console.error('Error loading profile:', error);
-        showError('Failed to load profile');
-    }
-}
-
-async function saveProfile() {
-    try {
-        const profileData = {
-            name: elements.profileName.value,
-            email: elements.profileEmail.value,
-            bio: elements.profileBio.value
+        const searchResults = {
+            groups: this.state.groups.filter(group => 
+                group.name.toLowerCase().includes(query.toLowerCase())
+            ),
+            messages: this.state.messages.filter(message => 
+                message.content.toLowerCase().includes(query.toLowerCase())
+            )
         };
-        
-        await AuthService.updateProfile(profileData);
-        showSuccess('Profile updated successfully');
-    } catch (error) {
-        console.error('Error saving profile:', error);
-        showError('Failed to save profile');
+
+        this.renderSearchResults(searchResults);
+    }
+
+    renderInitialView() {
+        this.components.groups.render();
+        this.components.chat.render();
+        this.components.profile.render();
+    }
+
+    renderSearchResults(results) {
+        // Implement search results rendering
+    }
+
+    hideAllModals() {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.classList.add('hidden');
+        });
+    }
+
+    showError(message) {
+        const notification = document.createElement('div');
+        notification.className = 'notification error';
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-icon material-icons">error</span>
+                <span class="notification-message">${message}</span>
+            </div>
+            <button class="notification-close">
+                <span class="material-icons">close</span>
+            </button>
+        `;
+
+        document.querySelector('.notification-container').appendChild(notification);
+        setTimeout(() => notification.classList.add('show'), 100);
+
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        });
+    }
+
+    showSuccess(message) {
+        const notification = document.createElement('div');
+        notification.className = 'notification success';
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-icon material-icons">check_circle</span>
+                <span class="notification-message">${message}</span>
+            </div>
+            <button class="notification-close">
+                <span class="material-icons">close</span>
+            </button>
+        `;
+
+        document.querySelector('.notification-container').appendChild(notification);
+        setTimeout(() => notification.classList.add('show'), 100);
+
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        });
     }
 }
 
 // Utility Functions
-function formatTime(timestamp) {
-    return new Date(timestamp).toLocaleTimeString();
-}
-
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -393,15 +198,7 @@ function debounce(func, wait) {
     };
 }
 
-function showError(message) {
-    // Implement error notification
-    console.error(message);
-}
-
-function showSuccess(message) {
-    // Implement success notification
-    console.log(message);
-}
-
-// Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', initApp); 
+// Initialize the application
+document.addEventListener('DOMContentLoaded', () => {
+    window.circleApp = new CircleApp();
+}); 

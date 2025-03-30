@@ -13,9 +13,168 @@ Circle is a modern web application for secure group communication, featuring rea
 - 🔔 Real-time notifications
 - 📱 Responsive design for all devices
 
+## TaskTaxi.Co Integration
+
+TaskTaxi.Co is a task outsourcing platform integrated into Circle, enabling users to create, manage, and complete tasks within their network.
+
+### Key Features
+- Create and manage task lists
+- Set task priorities and deadlines
+- Real-time task tracking
+- Secure payment processing
+- Location-based task matching
+- Rating and review system
+
+### Use Cases
+- Pregnancy support tasks
+- Busy professional assistance
+- Elderly care support
+- Emergency task delegation
+- Daily errand running
+
+### How It Works
+1. Create a task list with details and budget
+2. Circle matches you with available members
+3. Track task progress in real-time
+4. Pay securely through the platform
+5. Rate and review completed tasks
+
+## Lightning Network Payments
+
+Circle integrates Bitcoin Lightning Network for fast, secure, and low-cost payments.
+
+### Features
+- Real-time exchange rates
+- Multi-currency support (BTC, ETH, SOL, USDC)
+- Automatic currency conversion
+- Transaction history tracking
+- Invoice expiration handling
+- Secure payment processing
+
+### Supported Payment Methods
+- Bitcoin (Lightning Network)
+- Ethereum
+- Solana
+- USDC (Ethereum)
+
+### Security Features
+- End-to-end encryption
+- Multi-signature support
+- Automatic backup
+- Transaction monitoring
+- Fraud detection
+
+### Getting Started with Payments
+1. Set up a Lightning Network node
+2. Configure your wallet
+3. Enable payment methods
+4. Start accepting payments
+
+For detailed payment setup instructions, see [LIGHTNING.md](LIGHTNING.md)
+
+## Continuum Integration
+
+Continuum is Circle's advanced spatial computing system that enables seamless interaction between physical and virtual spaces.
+
+### Features
+- Real-time spatial mapping
+- Cross-dimensional communication
+- Quantum state synchronization
+- Multi-dimensional data visualization
+- Spatial memory persistence
+
+### Applications
+- Virtual meeting spaces
+- Augmented reality overlays
+- Spatial data analysis
+- Multi-dimensional collaboration
+- Quantum computing integration
+
+## PosSys Coordinate System
+
+PosSys is Circle's proprietary positioning system that provides precise spatial coordinates across multiple dimensions.
+
+### Key Components
+- Quantum coordinate mapping
+- Multi-dimensional positioning
+- Real-time spatial tracking
+- Cross-dimensional navigation
+- Position persistence
+
+### Coordinate Types
+- Physical coordinates (x, y, z)
+- Temporal coordinates (t)
+- Quantum coordinates (q)
+- Virtual coordinates (v)
+- Continuum coordinates (c)
+
+### Applications
+- Precise location tracking
+- Multi-dimensional navigation
+- Spatial data analysis
+- Virtual reality positioning
+- Augmented reality mapping
+
+## VRView System
+
+VRView is Circle's virtual reality interface that provides immersive experiences and interactions.
+
+### Features
+- 360-degree environment rendering
+- Real-time spatial audio
+- Haptic feedback integration
+- Multi-user synchronization
+- Cross-dimensional viewing
+
+### Supported Devices
+- VR headsets
+- AR glasses
+- Mobile devices
+- Desktop systems
+- Spatial computing devices
+
+### Use Cases
+- Virtual meetings
+- Remote collaboration
+- Training simulations
+- Virtual events
+- Spatial computing applications
+
+## QubPix Technology
+
+QubPix is Circle's quantum-enhanced pixel technology that enables advanced visual processing and rendering.
+
+### Features
+- Quantum color processing
+- Multi-dimensional rendering
+- Real-time pixel optimization
+- Adaptive resolution scaling
+- Quantum compression
+
+### Applications
+- High-resolution displays
+- Virtual reality rendering
+- Augmented reality overlays
+- Medical imaging
+- Scientific visualization
+
+### Technical Specifications
+- Quantum bit depth: 16-bit
+- Color space: Quantum RGB
+- Frame rate: Adaptive (up to 240fps)
+- Resolution: Dynamic scaling
+- Compression ratio: 1:1000
+
+### Integration
+- WebGL compatibility
+- DirectX support
+- Vulkan integration
+- Metal framework support
+- OpenGL ES compatibility
+
 ## Prerequisites
 
-- Node.js (v18.0.0 or higher)
+- Node.js (v20.0.0 or higher)
 - npm (v8.0.0 or higher)
 - A DigitalOcean account
 - A domain name (optional)

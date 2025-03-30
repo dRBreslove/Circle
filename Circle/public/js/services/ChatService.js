@@ -18,7 +18,7 @@ class ChatService {
             }
 
             const response = await fetch(url, {
-                headers: authService.getAuthHeaders()
+                headers: this.getAuthHeaders()
             });
 
             if (!response.ok) {
@@ -45,7 +45,7 @@ class ChatService {
             const response = await fetch(`${this.baseUrl}/${groupId}/messages`, {
                 method: 'POST',
                 headers: {
-                    ...authService.getAuthHeaders(),
+                    ...this.getAuthHeaders(),
                     // Remove Content-Type header to let browser set it with boundary for FormData
                 },
                 body: formData
@@ -68,7 +68,7 @@ class ChatService {
         try {
             const response = await fetch(`${this.baseUrl}/${groupId}/messages/${messageId}`, {
                 method: 'DELETE',
-                headers: authService.getAuthHeaders()
+                headers: this.getAuthHeaders()
             });
 
             if (!response.ok) {
@@ -87,7 +87,7 @@ class ChatService {
         try {
             const response = await fetch(`${this.baseUrl}/${groupId}/messages/${messageId}`, {
                 method: 'PUT',
-                headers: authService.getAuthHeaders(),
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ text })
             });
 
@@ -112,7 +112,7 @@ class ChatService {
             const response = await fetch(`${this.baseUrl}/attachments`, {
                 method: 'POST',
                 headers: {
-                    ...authService.getAuthHeaders(),
+                    ...this.getAuthHeaders(),
                     // Remove Content-Type header to let browser set it with boundary for FormData
                 },
                 body: formData
@@ -133,7 +133,7 @@ class ChatService {
         try {
             const response = await fetch(`${this.baseUrl}/${groupId}/messages/${messageId}/attachments/${attachmentId}`, {
                 method: 'DELETE',
-                headers: authService.getAuthHeaders()
+                headers: this.getAuthHeaders()
             });
 
             if (!response.ok) {
@@ -152,7 +152,7 @@ class ChatService {
         try {
             const response = await fetch(`${this.baseUrl}/${groupId}/messages/${messageId}/read`, {
                 method: 'POST',
-                headers: authService.getAuthHeaders()
+                headers: this.getAuthHeaders()
             });
 
             if (!response.ok) {
@@ -169,7 +169,7 @@ class ChatService {
     async getUnreadCount(groupId) {
         try {
             const response = await fetch(`${this.baseUrl}/${groupId}/unread`, {
-                headers: authService.getAuthHeaders()
+                headers: this.getAuthHeaders()
             });
 
             if (!response.ok) {
@@ -195,6 +195,13 @@ class ChatService {
 
     clearAllCache() {
         this.messageCache.clear();
+    }
+
+    getAuthHeaders() {
+        const token = localStorage.getItem('authToken');
+        return {
+            'Authorization': `Bearer ${token}`
+        };
     }
 }
 
