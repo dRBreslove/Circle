@@ -8,13 +8,15 @@
     "dev": "nodemon server.js",
     "test": "jest",
     "security-audit": "npm audit && snyk test",
+    "force-security-check": "npm audit && snyk test && eslint . --plugin security",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky install",
     "pre-commit": "lint-staged"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "npm": "11.2.0"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -61,5 +63,6 @@
     "*.{json,css,md}": [
       "prettier --write"
     ]
-  }
+  },
+  "packageManager": "npm@11.2.0"
 } 
