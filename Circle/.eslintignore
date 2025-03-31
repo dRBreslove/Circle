@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+dist/
+
+# Build output
+build/
+out/
+
+# Test files
+__tests__/
+*.test.js
+*.spec.js
+
+# Configuration files
+.eslintrc.json
+.eslintignore
+
+# Documentation
+docs/
+*.md
+
+# Other
+.git/
+.gitignore
+.env
+.env.*
+*.log 

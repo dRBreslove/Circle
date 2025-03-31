@@ -1,30 +1,17 @@
 // Main Application Class
 class CircleApp {
     constructor() {
-        this.state = {
-            currentUser: null,
-            currentGroup: null,
-            groups: [],
-            messages: [],
-            participants: [],
-            isInCall: false,
-            callType: null,
-            isMuted: false,
-            isVideoEnabled: true
-        };
-
-        this.services = {
-            ws: new WebSocketService(),
-            webrtc: new WebRTCService(),
-            auth: new AuthService(),
-            group: new GroupService(),
-            chat: new ChatService()
-        };
-
+        this.socket = null;
+        this.authService = new AuthService();
+        this.webSocketService = new WebSocketService();
+        this.webRTCService = new WebRTCService();
+        this.miningPoolService = new MiningPoolService();
+        
         this.components = {
             groups: new GroupsComponent(this),
             chat: new ChatComponent(this),
             call: new CallComponent(this),
+            mining: new MiningComponent(this),
             profile: new ProfileComponent(this)
         };
 
@@ -34,171 +21,101 @@ class CircleApp {
     async init() {
         try {
             // Initialize services
-            await this.services.auth.init();
-            await this.services.ws.init();
-            await this.services.webrtc.init();
+            await this.authService.init();
+            this.webSocketService.init();
+            this.webRTCService.init();
+            this.miningPoolService.init();
 
-            // Load user data
-            await this.loadUserData();
+            // Initialize components
+            Object.values(this.components).forEach(component => component.init());
 
-            // Setup event listeners
+            // Setup navigation
+            this.setupNavigation();
+
+            // Setup global event listeners
             this.setupEventListeners();
 
-            // Setup WebSocket listeners
-            this.setupWebSocketListeners();
-
-            // Render initial view
-            this.renderInitialView();
+            // Show initial section
+            this.showSection('groups');
         } catch (error) {
-            console.error('Failed to initialize app:', error);
+            console.error('Application initialization error:', error);
             this.showError('Failed to initialize application');
         }
     }
 
-    async loadUserData() {
-        try {
-            const userData = await this.services.auth.getCurrentUser();
-            this.state.currentUser = userData;
-            await this.components.profile.loadProfile(userData);
-        } catch (error) {
-            console.error('Failed to load user data:', error);
-            this.showError('Failed to load user data');
-        }
-    }
-
-    setupEventListeners() {
-        // Navigation
-        document.getElementById('createGroupBtn').addEventListener('click', () => this.components.groups.showCreateModal());
-        document.getElementById('profileBtn').addEventListener('click', () => this.components.profile.show());
-
-        // Search
-        const searchInput = document.querySelector('.search-box input');
-        searchInput.addEventListener('input', debounce((e) => this.handleSearch(e.target.value), 300));
-
-        // Modal close buttons
-        document.querySelectorAll('.close-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.hideAllModals());
+    setupNavigation() {
+        const navLinks = document.querySelectorAll('.sidebar-nav a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = e.currentTarget.dataset.section;
+                this.showSection(section);
+            });
         });
     }
 
-    setupWebSocketListeners() {
-        this.services.ws.on('group:update', (data) => this.handleGroupUpdate(data));
-        this.services.ws.on('message:new', (data) => this.handleNewMessage(data));
-        this.services.ws.on('participant:join', (data) => this.handleParticipantJoin(data));
-        this.services.ws.on('participant:leave', (data) => this.handleParticipantLeave(data));
-        this.services.ws.on('call:request', (data) => this.handleCallRequest(data));
+    setupEventListeners() {
+        // Global error handling
+        window.addEventListener('error', (e) => {
+            console.error('Global error:', e);
+            this.showError('An unexpected error occurred');
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            Object.values(this.components).forEach(component => {
+                if (component.handleResize) {
+                    component.handleResize();
+                }
+            });
+        });
     }
 
-    handleGroupUpdate(data) {
-        this.components.groups.updateGroup(data);
-    }
+    showSection(sectionId) {
+        // Hide all sections
+        document.querySelectorAll('.section').forEach(section => {
+            section.classList.remove('active');
+        });
 
-    handleNewMessage(data) {
-        this.components.chat.addMessage(data);
-    }
+        // Show selected section
+        const selectedSection = document.getElementById(sectionId);
+        if (selectedSection) {
+            selectedSection.classList.add('active');
+        }
 
-    handleParticipantJoin(data) {
-        this.components.chat.addParticipant(data);
-    }
-
-    handleParticipantLeave(data) {
-        this.components.chat.removeParticipant(data);
-    }
-
-    handleCallRequest(data) {
-        this.components.call.handleIncomingCall(data);
-    }
-
-    handleSearch(query) {
-        if (!query.trim()) return;
-        
-        const searchResults = {
-            groups: this.state.groups.filter(group => 
-                group.name.toLowerCase().includes(query.toLowerCase())
-            ),
-            messages: this.state.messages.filter(message => 
-                message.content.toLowerCase().includes(query.toLowerCase())
-            )
-        };
-
-        this.renderSearchResults(searchResults);
-    }
-
-    renderInitialView() {
-        this.components.groups.render();
-        this.components.chat.render();
-        this.components.profile.render();
-    }
-
-    renderSearchResults(results) {
-        // Implement search results rendering
-    }
-
-    hideAllModals() {
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.classList.add('hidden');
+        // Update navigation
+        document.querySelectorAll('.sidebar-nav a').forEach(link => {
+            link.classList.remove('active');
+            if (link.dataset.section === sectionId) {
+                link.classList.add('active');
+            }
         });
     }
 
     showError(message) {
         const notification = document.createElement('div');
         notification.className = 'notification error';
-        notification.innerHTML = `
-            <div class="notification-content">
-                <span class="notification-icon material-icons">error</span>
-                <span class="notification-message">${message}</span>
-            </div>
-            <button class="notification-close">
-                <span class="material-icons">close</span>
-            </button>
-        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
 
-        document.querySelector('.notification-container').appendChild(notification);
-        setTimeout(() => notification.classList.add('show'), 100);
-
-        notification.querySelector('.notification-close').addEventListener('click', () => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 300);
-        });
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
     }
 
     showSuccess(message) {
         const notification = document.createElement('div');
         notification.className = 'notification success';
-        notification.innerHTML = `
-            <div class="notification-content">
-                <span class="notification-icon material-icons">check_circle</span>
-                <span class="notification-message">${message}</span>
-            </div>
-            <button class="notification-close">
-                <span class="material-icons">close</span>
-            </button>
-        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
 
-        document.querySelector('.notification-container').appendChild(notification);
-        setTimeout(() => notification.classList.add('show'), 100);
-
-        notification.querySelector('.notification-close').addEventListener('click', () => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 300);
-        });
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
     }
 }
 
-// Utility Functions
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// Initialize the application
+// Initialize the application when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.circleApp = new CircleApp();
+    window.app = new CircleApp();
 }); 

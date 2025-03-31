@@ -1,6 +1,15 @@
-# Circle - Secure Group Communication
+# Circle v3.0.0
 
-Circle is a modern web application for secure group communication, featuring real-time chat, video calls, and voice calls. Built with HTML5, CSS3, JavaScript (ES6), and Node.js.
+Circle is a modern communication platform that combines group chat, video calls, and task management features.
+
+## Documentation
+
+- [Main Documentation](README.md)
+- [TaskTaxi.Co Documentation](README4.md)
+- [Lightning Network Integration](docs/LIGHTNING.md)
+- [Continuum Documentation](README_Continuum.md)
+- [Position System & VR Guide](README2.md)
+- [Development Guide](README3.md)
 
 ## Features
 
@@ -387,129 +396,39 @@ sudo chown -R `id -u` /data/db
 sudo chown -R redis:redis /var/lib/redis
 ```
 
-## Deployment to DigitalOcean
+## Deployment
 
-### 1. Prepare Your Application
+1. Set up your server with:
+   - Node.js v20.0.0 or higher
+   - MongoDB v6.0 or higher
+   - Redis v7.0 or higher
+   - Nginx (for reverse proxy)
 
-1. Create a `Dockerfile` in the root directory:
-```dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-
-EXPOSE 8080
-
-CMD ["npm", "start"]
-```
-
-2. Create a `.dockerignore` file:
-```
-node_modules
-npm-debug.log
-.env
-.git
-.gitignore
-```
-
-### 2. Set Up DigitalOcean
-
-1. Install the DigitalOcean CLI (doctl):
-```bash
-# macOS
-brew install doctl
-
-# Linux
-snap install doctl
-```
-
-2. Authenticate with DigitalOcean:
-```bash
-doctl auth init
-```
-
-3. Create a new Droplet:
-```bash
-doctl compute droplet create circle-app \
-  --region nyc1 \
-  --size s-1vcpu-1gb \
-  --image ubuntu-20-04-x64 \
-  --ssh-keys your_ssh_key_id
-```
-
-4. Get your Droplet's IP address:
-```bash
-doctl compute droplet get circle-app --format PublicIPv4
-```
-
-### 3. Deploy the Application
-
-1. SSH into your Droplet:
-```bash
-ssh root@your_droplet_ip
-```
-
-2. Install Docker and Docker Compose:
-```bash
-# Update system
-apt update && apt upgrade -y
-
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-
-# Install Docker Compose
-curl -L "https://github.com/docker/compose/releases/download/v2.5.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
-```
-
-3. Clone your repository:
+2. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/circle.git
 cd circle
 ```
 
-4. Create a production `.env` file:
+3. Install dependencies:
 ```bash
-nano .env
-```
-Add your production environment variables:
-```env
-PORT=8080
-NODE_ENV=production
-JWT_SECRET=your_secure_jwt_secret
-MONGODB_URI=your_production_mongodb_uri
+npm install
 ```
 
-5. Build and start the application:
+4. Set up environment variables:
 ```bash
-docker-compose up -d --build
+cp .env.example .env
+# Edit .env with your production settings
 ```
 
-### 4. Set Up Nginx (Optional)
-
-1. Install Nginx:
-```bash
-apt install nginx -y
-```
-
-2. Create an Nginx configuration file:
-```bash
-nano /etc/nginx/sites-available/circle
-```
-
-Add the following configuration:
+5. Configure Nginx as a reverse proxy:
 ```nginx
 server {
     listen 80;
-    server_name your_domain.com;
+    server_name your-domain.com;
 
     location / {
-        proxy_pass http://localhost:8080;
+        proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -519,25 +438,25 @@ server {
 }
 ```
 
-3. Enable the site:
+6. Set up SSL with Let's Encrypt:
 ```bash
-ln -s /etc/nginx/sites-available/circle /etc/nginx/sites-enabled/
-rm /etc/nginx/sites-enabled/default
-nginx -t
-systemctl restart nginx
+sudo certbot --nginx -d your-domain.com
 ```
 
-### 5. Set Up SSL with Let's Encrypt (Optional)
-
-1. Install Certbot:
+7. Start the production server:
 ```bash
-apt install certbot python3-certbot-nginx -y
+npm start
 ```
 
-2. Get SSL certificate:
+8. Set up process management with PM2:
 ```bash
-certbot --nginx -d your_domain.com
+npm install -g pm2
+pm2 start src/server.js --name circle
+pm2 save
+pm2 startup
 ```
+
+The application will now be running securely on your server with SSL encryption and proper process management.
 
 ## Monitoring and Maintenance
 

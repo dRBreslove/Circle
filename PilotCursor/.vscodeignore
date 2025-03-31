@@ -1,0 +1,10 @@
+# The following files and directories should be ignored when packaging the extension
+.vscode
+node_modules
+*.log
+*.ts
+*.map
+src/test
+src/**/*.test.js
+README.md
+CHANGELOG.md

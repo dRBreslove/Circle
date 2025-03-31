@@ -1,6 +1,11 @@
-# Bitcoin Lightning Network Integration
+# Lightning Network Integration
 
-## Overview
+## Navigation
+- [Main Documentation](../README.md)
+- [TaskTaxi.Co Documentation](../README4.md)
+- [Continuum Documentation](../README_Continuum.md)
+- [Position System & VR Guide](../README2.md)
+- [Development Guide](../README3.md)
 
 TaskTaxi.Co supports Bitcoin Lightning Network payments as an alternative to traditional credit card payments. This integration allows users to pay for tasks using Bitcoin through the Lightning Network, providing fast, secure, and low-cost transactions.
 

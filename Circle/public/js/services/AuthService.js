@@ -1,12 +1,179 @@
 class AuthService {
     constructor() {
-        this.baseUrl = '/api/auth';
-        this.currentUser = null;
-        this.token = localStorage.getItem('auth_token');
+        this.baseUrl = '/api';
+        this.tokenRefreshInterval = null;
+        this.tokenExpiryTime = null;
+    }
+
+    // Secure token storage using httpOnly cookies
+    setAuthToken(token, expiresIn = 3600) {
+        document.cookie = `auth_token=${token}; path=/; secure; samesite=strict; httponly`;
+        this.tokenExpiryTime = Date.now() + (expiresIn * 1000);
+        this.startTokenRefresh();
+    }
+
+    getAuthToken() {
+        const cookies = document.cookie.split(';');
+        const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('auth_token='));
+        return tokenCookie ? tokenCookie.split('=')[1] : null;
+    }
+
+    clearAuth() {
+        document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        this.stopTokenRefresh();
+        this.tokenExpiryTime = null;
+    }
+
+    // Secure headers with CSRF protection
+    getAuthHeaders() {
+        const token = this.getAuthToken();
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        
+        return {
+            'Authorization': `Bearer ${token}`,
+            'X-CSRF-Token': csrfToken,
+            'Content-Type': 'application/json'
+        };
+    }
+
+    // Token refresh mechanism
+    startTokenRefresh() {
+        this.stopTokenRefresh();
+        this.tokenRefreshInterval = setInterval(() => {
+            if (this.shouldRefreshToken()) {
+                this.refreshToken();
+            }
+        }, 60000); // Check every minute
+    }
+
+    stopTokenRefresh() {
+        if (this.tokenRefreshInterval) {
+            clearInterval(this.tokenRefreshInterval);
+            this.tokenRefreshInterval = null;
+        }
+    }
+
+    shouldRefreshToken() {
+        return this.tokenExpiryTime && (this.tokenExpiryTime - Date.now() < 300000); // Refresh if less than 5 minutes remaining
+    }
+
+    async refreshToken() {
+        try {
+            const response = await fetch(`${this.baseUrl}/auth/refresh`, {
+                method: 'POST',
+                headers: this.getAuthHeaders(),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Token refresh failed');
+            }
+
+            const data = await response.json();
+            this.setAuthToken(data.token, data.expiresIn);
+            return true;
+        } catch (error) {
+            console.error('Token refresh failed:', error);
+            this.clearAuth();
+            return false;
+        }
+    }
+
+    // Secure login with rate limiting
+    async login(email, password) {
+        try {
+            const response = await fetch(`${this.baseUrl}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ email, password }),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Login failed');
+            }
+
+            const data = await response.json();
+            this.setAuthToken(data.token, data.expiresIn);
+            return data.user;
+        } catch (error) {
+            console.error('Login failed:', error);
+            throw error;
+        }
+    }
+
+    // Secure registration with validation
+    async register(userData) {
+        try {
+            const response = await fetch(`${this.baseUrl}/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(userData),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Registration failed');
+            }
+
+            const data = await response.json();
+            this.setAuthToken(data.token, data.expiresIn);
+            return data.user;
+        } catch (error) {
+            console.error('Registration failed:', error);
+            throw error;
+        }
+    }
+
+    // Secure logout
+    async logout() {
+        try {
+            await fetch(`${this.baseUrl}/auth/logout`, {
+                method: 'POST',
+                headers: this.getAuthHeaders(),
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Logout failed:', error);
+        } finally {
+            this.clearAuth();
+        }
+    }
+
+    // Validate token
+    async validateToken() {
+        try {
+            const response = await fetch(`${this.baseUrl}/auth/validate`, {
+                method: 'GET',
+                headers: this.getAuthHeaders(),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Token validation failed');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Token validation failed:', error);
+            this.clearAuth();
+            return null;
+        }
+    }
+
+    // Check authentication status
+    isAuthenticated() {
+        return !!this.getAuthToken() && this.tokenExpiryTime && this.tokenExpiryTime > Date.now();
     }
 
     async init() {
-        if (this.token) {
+        if (this.isAuthenticated()) {
             try {
                 this.currentUser = await this.getCurrentUser();
             } catch (error) {
@@ -16,66 +183,14 @@ class AuthService {
         }
     }
 
-    async login(email, password) {
-        try {
-            const response = await fetch(`${this.baseUrl}/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
-
-            if (!response.ok) {
-                throw new Error('Login failed');
-            }
-
-            const data = await response.json();
-            this.token = data.token;
-            this.currentUser = data.user;
-            localStorage.setItem('auth_token', this.token);
-            return this.currentUser;
-        } catch (error) {
-            console.error('Login error:', error);
-            throw error;
-        }
-    }
-
-    async register(userData) {
-        try {
-            const response = await fetch(`${this.baseUrl}/register`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(userData)
-            });
-
-            if (!response.ok) {
-                throw new Error('Registration failed');
-            }
-
-            const data = await response.json();
-            this.token = data.token;
-            this.currentUser = data.user;
-            localStorage.setItem('auth_token', this.token);
-            return this.currentUser;
-        } catch (error) {
-            console.error('Registration error:', error);
-            throw error;
-        }
-    }
-
     async getCurrentUser() {
-        if (!this.token) {
+        if (!this.isAuthenticated()) {
             return null;
         }
 
         try {
-            const response = await fetch(`${this.baseUrl}/me`, {
-                headers: {
-                    'Authorization': `Bearer ${this.token}`
-                }
+            const response = await fetch(`${this.baseUrl}/auth/me`, {
+                headers: this.getAuthHeaders()
             });
 
             if (!response.ok) {
@@ -97,10 +212,8 @@ class AuthService {
         }
 
         try {
-            const response = await fetch(`${this.baseUrl}/profile`, {
-                headers: {
-                    'Authorization': `Bearer ${this.token}`
-                }
+            const response = await fetch(`${this.baseUrl}/auth/profile`, {
+                headers: this.getAuthHeaders()
             });
 
             if (!response.ok) {
@@ -120,12 +233,9 @@ class AuthService {
         }
 
         try {
-            const response = await fetch(`${this.baseUrl}/profile`, {
+            const response = await fetch(`${this.baseUrl}/auth/profile`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`,
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(profileData)
             });
 
@@ -151,11 +261,9 @@ class AuthService {
             const formData = new FormData();
             formData.append('avatar', file);
 
-            const response = await fetch(`${this.baseUrl}/profile/avatar`, {
+            const response = await fetch(`${this.baseUrl}/auth/profile/avatar`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`
-                },
+                headers: this.getAuthHeaders(),
                 body: formData
             });
 
@@ -178,12 +286,9 @@ class AuthService {
         }
 
         try {
-            const response = await fetch(`${this.baseUrl}/profile/password`, {
+            const response = await fetch(`${this.baseUrl}/auth/profile/password`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`,
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ currentPassword, newPassword })
             });
 
@@ -196,23 +301,6 @@ class AuthService {
             console.error('Error changing password:', error);
             throw error;
         }
-    }
-
-    logout() {
-        this.token = null;
-        this.currentUser = null;
-        localStorage.removeItem('auth_token');
-    }
-
-    isAuthenticated() {
-        return !!this.token && !!this.currentUser;
-    }
-
-    getAuthHeaders() {
-        return {
-            'Authorization': `Bearer ${this.token}`,
-            'Content-Type': 'application/json'
-        };
     }
 }
 

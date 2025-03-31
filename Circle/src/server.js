@@ -1,7 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const path = require('path');
 const { WebSocketService } = require('./services/WebSocketService');
 const { ReportExportService } = require('./services/ReportExportService');
@@ -17,11 +19,23 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Database connection
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('MongoDB connection error:', err));
+
 // Services
 const webSocketService = new WebSocketService(io);
 const reportExportService = new ReportExportService();
 const alertService = new AlertService();
 const monitoringService = new CryptoMonitoringService();
+
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/groups', require('./routes/groups'));
+app.use('/api/messages', require('./routes/messages'));
+app.use('/api/mining', require('./routes/mining'));
 
 // API Routes
 app.get('/api/dashboard/initial-data', async (req, res) => {
@@ -72,22 +86,37 @@ app.post('/api/dashboard/thresholds', async (req, res) => {
     }
 });
 
-// WebSocket connection handling
+// Socket.IO connection handling
 io.on('connection', (socket) => {
-    console.log('Client connected');
+    console.log('New client connected');
+
+    // Join a group
+    socket.on('join-group', (groupId) => {
+        socket.join(groupId);
+    });
+
+    // Leave a group
+    socket.on('leave-group', (groupId) => {
+        socket.leave(groupId);
+    });
+
+    // Handle chat messages
+    socket.on('chat-message', (data) => {
+        io.to(data.groupId).emit('new-message', data);
+    });
+
+    // Handle video call signals
+    socket.on('call-signal', (data) => {
+        io.to(data.targetUserId).emit('incoming-call', data);
+    });
+
+    // Handle mining updates
+    socket.on('mining-update', (data) => {
+        io.emit('mining-stats', data);
+    });
 
     socket.on('disconnect', () => {
         console.log('Client disconnected');
-    });
-
-    // Subscribe to specific metrics
-    socket.on('subscribe_metrics', (metrics) => {
-        webSocketService.subscribeToMetrics(socket, metrics);
-    });
-
-    // Unsubscribe from metrics
-    socket.on('unsubscribe_metrics', (metrics) => {
-        webSocketService.unsubscribeFromMetrics(socket, metrics);
     });
 });
 
@@ -97,7 +126,7 @@ monitoringService.startMonitoring();
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Something went wrong!' });
 });
 
 // Start server

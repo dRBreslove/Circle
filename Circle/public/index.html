@@ -3,221 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{csrfToken}}">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss: https:; media-src 'self' https:;">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()">
     <title>Circle - Secure Group Communication</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="icon" type="image/png" href="/assets/images/logo.png">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Navigation -->
-        <nav class="nav-bar">
-            <div class="nav-left">
-                <img src="/src/assets/images/logo.png" alt="Circle Logo" class="logo">
-                <div class="search-box">
-                    <i class="material-icons">search</i>
-                    <input type="text" placeholder="Search groups, messages, or users">
-                </div>
+    <div id="app">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <img src="/assets/images/logo.png" alt="Circle Logo" class="logo">
             </div>
-            <div class="nav-right">
-                <button class="icon-button" id="createGroupBtn">
-                    <i class="material-icons">group_add</i>
-                </button>
-                <button class="icon-button" id="profileBtn">
-                    <i class="material-icons">account_circle</i>
-                </button>
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="Search...">
+            </div>
+            <div class="nav-actions">
+                <button id="newGroupBtn" class="btn-primary">New Group</button>
+                <button id="profileBtn" class="btn-secondary">Profile</button>
             </div>
         </nav>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Groups List -->
-            <section id="groupsSection" class="section active">
-                <div class="section-header">
-                    <h2>My Groups</h2>
-                    <div class="search-box">
-                        <input type="text" placeholder="Search groups..." id="groupSearch">
-                        <span class="material-icons">search</span>
-                    </div>
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="groups-list" id="groupsList">
+                    <!-- Groups will be dynamically added here -->
                 </div>
-                <div class="groups-grid" id="groupsList">
-                    <!-- Groups will be dynamically inserted here -->
-                </div>
-            </section>
+                <li><a href="#" data-section="webgl-view"><i class="fas fa-cube"></i> 3D View</a></li>
+            </div>
 
-            <!-- Group Chat -->
-            <section id="chatSection" class="section">
-                <div class="chat-header">
-                    <button class="btn icon back-btn">
-                        <span class="material-icons">arrow_back</span>
-                    </button>
-                    <div class="chat-info">
-                        <h3 id="currentGroupName">Group Name</h3>
-                        <span id="participantCount">0 participants</span>
-                    </div>
-                    <div class="chat-actions">
-                        <button class="btn icon" id="videoCallBtn">
-                            <span class="material-icons">videocam</span>
-                        </button>
-                        <button class="btn icon" id="voiceCallBtn">
-                            <span class="material-icons">call</span>
-                        </button>
-                    </div>
+            <div class="chat-container">
+                <div class="chat-header" id="chatHeader">
+                    <!-- Chat header will be dynamically updated -->
                 </div>
-                <div class="chat-messages" id="messagesList">
-                    <!-- Messages will be dynamically inserted here -->
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Messages will be dynamically added here -->
                 </div>
-                <div class="chat-input">
-                    <button class="btn icon" id="attachBtn">
-                        <span class="material-icons">attach_file</span>
-                    </button>
-                    <input type="text" placeholder="Type a message..." id="messageInput">
-                    <button class="btn icon" id="sendBtn">
-                        <span class="material-icons">send</span>
-                    </button>
-                </div>
-            </section>
-
-            <!-- Video Call -->
-            <section id="videoCallSection" class="section">
-                <div class="video-header">
-                    <button class="btn icon back-btn">
-                        <span class="material-icons">arrow_back</span>
-                    </button>
-                    <h3>Video Call</h3>
-                    <div class="call-actions">
-                        <button class="btn icon" id="muteBtn">
-                            <span class="material-icons">mic</span>
-                        </button>
-                        <button class="btn icon" id="videoBtn">
-                            <span class="material-icons">videocam</span>
-                        </button>
-                        <button class="btn icon" id="endCallBtn">
-                            <span class="material-icons">call</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="video-grid" id="videoGrid">
-                    <!-- Video elements will be dynamically inserted here -->
-                </div>
-            </section>
-
-            <!-- Voice Call -->
-            <section id="voiceCallSection" class="section">
-                <div class="call-header">
-                    <button class="btn icon back-btn">
-                        <span class="material-icons">arrow_back</span>
-                    </button>
-                    <h3>Voice Call</h3>
-                    <div class="call-actions">
-                        <button class="btn icon" id="muteBtn">
-                            <span class="material-icons">mic</span>
-                        </button>
-                        <button class="btn icon" id="endCallBtn">
-                            <span class="material-icons">call</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="call-participants" id="callParticipants">
-                    <!-- Participant avatars will be dynamically inserted here -->
-                </div>
-            </section>
-
-            <!-- Profile -->
-            <section id="profileSection" class="section">
-                <div class="profile-header">
-                    <button class="btn icon back-btn">
-                        <span class="material-icons">arrow_back</span>
-                    </button>
-                    <h2>Profile</h2>
-                </div>
-                <div class="profile-content">
-                    <div class="profile-avatar">
-                        <img src="default-avatar.png" alt="Profile" id="profileImage">
-                        <button class="btn icon" id="changeAvatarBtn">
-                            <span class="material-icons">camera_alt</span>
-                        </button>
-                    </div>
-                    <div class="profile-info">
-                        <div class="info-group">
-                            <label>Name</label>
-                            <input type="text" id="profileName" placeholder="Your name">
-                        </div>
-                        <div class="info-group">
-                            <label>Email</label>
-                            <input type="email" id="profileEmail" placeholder="Your email">
-                        </div>
-                        <div class="info-group">
-                            <label>Bio</label>
-                            <textarea id="profileBio" placeholder="Tell us about yourself"></textarea>
-                        </div>
-                        <button class="btn primary" id="saveProfileBtn">Save Changes</button>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <!-- Modals -->
-        <div id="createGroupModal" class="modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Create New Group</h2>
-                    <button class="close-btn">
-                        <span class="material-icons">close</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Group Name</label>
-                        <input type="text" id="groupNameInput" placeholder="Enter group name">
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="groupDescInput" placeholder="Enter group description"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Add Members</label>
-                        <div class="member-search">
-                            <input type="text" id="memberSearch" placeholder="Search users...">
-                            <div class="search-results" id="memberSearchResults"></div>
-                        </div>
-                        <div class="selected-members" id="selectedMembers"></div>
-                    </div>
-                    <button class="btn primary" id="createGroupSubmit">Create Group</button>
+                <div class="message-input">
+                    <textarea id="messageInput" placeholder="Type a message..."></textarea>
+                    <button id="sendMessageBtn" class="btn-primary">Send</button>
                 </div>
             </div>
-        </div>
 
-        <div id="joinGroupModal" class="modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Join Group</h2>
-                    <button class="close-btn">
-                        <span class="material-icons">close</span>
-                    </button>
+            <div class="call-container" id="callContainer" style="display: none;">
+                <!-- Call interface will be dynamically shown/hidden -->
+            </div>
+
+            <div class="mining-container" id="miningContainer">
+                <div class="mining-header">
+                    <h2>Bitcoin Mining</h2>
+                    <div class="mining-status" id="miningStatus">Mining Inactive</div>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Group Code</label>
-                        <input type="text" id="groupCodeInput" placeholder="Enter group code">
+
+                <div class="mining-controls">
+                    <div class="pool-config">
+                        <h3>Pool Configuration</h3>
+                        <input type="text" id="poolUrl" placeholder="Pool URL">
+                        <input type="text" id="poolUsername" placeholder="Username">
+                        <input type="password" id="poolPassword" placeholder="Password">
+                        <select id="poolAlgorithm">
+                            <option value="sha256">SHA256</option>
+                            <option value="scrypt">Scrypt</option>
+                        </select>
+                        <input type="number" id="poolDifficulty" placeholder="Difficulty" value="1">
+                        <button id="connectPoolBtn" class="btn-primary">Connect to Pool</button>
                     </div>
-                    <button class="btn primary" id="joinGroupSubmit">Join Group</button>
+
+                    <div class="mining-config">
+                        <h3>Mining Configuration</h3>
+                        <select id="miningAlgorithm">
+                            <option value="sha256">SHA256</option>
+                            <option value="scrypt">Scrypt</option>
+                        </select>
+                        <input type="number" id="miningDifficulty" placeholder="Difficulty" value="1">
+                        <button id="updateConfigBtn" class="btn-secondary">Update Config</button>
+                    </div>
+
+                    <div class="mining-actions">
+                        <button id="startMiningBtn" class="btn-primary">Start Mining</button>
+                        <button id="stopMiningBtn" class="btn-danger" disabled>Stop Mining</button>
+                    </div>
+                </div>
+
+                <div class="mining-stats">
+                    <h3>Mining Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <label>Hash Rate</label>
+                            <span id="hashRate">0 H/s</span>
+                        </div>
+                        <div class="stat-item">
+                            <label>Shares Found</label>
+                            <span id="sharesFound">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <label>Rejected Shares</label>
+                            <span id="rejectedShares">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <label>Uptime</label>
+                            <span id="uptime">0h 0m</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pool-info">
+                    <h3>Pool Information</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Pool Name</label>
+                            <span id="poolName">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Pool URL</label>
+                            <span id="poolUrl">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Algorithm</label>
+                            <span id="poolAlgorithm">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Difficulty</label>
+                            <span id="poolDifficulty">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Active Workers</label>
+                            <span id="poolWorkers">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="payout-history">
+                    <h3>Payout History</h3>
+                    <div id="payoutHistory" class="payout-list">
+                        <!-- Payout history will be dynamically added here -->
+                    </div>
                 </div>
             </div>
+
+            <section id="webgl-view" class="section">
+                <div class="webgl-container">
+                    <div class="webgl-header">
+                        <h2>3D Visualization</h2>
+                        <div class="webgl-controls">
+                            <select id="model-select">
+                                <option value="cube">Cube</option>
+                                <option value="sphere">Sphere</option>
+                                <option value="custom">Custom Model</option>
+                            </select>
+                            <button class="btn-secondary" id="reset-camera">
+                                <i class="fas fa-camera"></i> Reset Camera
+                            </button>
+                        </div>
+                    </div>
+                    <div class="webgl-content">
+                        <canvas id="webgl-canvas"></canvas>
+                        <div class="webgl-info">
+                            <div class="info-item">
+                                <label>Camera Position</label>
+                                <span id="camera-position">X: 0, Y: 0, Z: 5</span>
+                            </div>
+                            <div class="info-item">
+                                <label>FPS</label>
+                                <span id="fps-counter">60</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Polygons</label>
+                                <span id="polygon-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="webgl-instructions">
+                        <h3>Controls</h3>
+                        <ul>
+                            <li><strong>W/S:</strong> Move forward/backward</li>
+                            <li><strong>A/D:</strong> Move left/right</li>
+                            <li><strong>Q/E:</strong> Move up/down</li>
+                            <li><strong>Mouse:</strong> Look around</li>
+                            <li><strong>Scroll:</strong> Zoom in/out</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 
     <!-- Scripts -->
-    <script src="js/config.js"></script>
-    <script src="js/services/WebSocketService.js"></script>
-    <script src="js/services/WebRTCService.js"></script>
-    <script src="js/services/AuthService.js"></script>
-    <script src="js/services/GroupService.js"></script>
-    <script src="js/services/ChatService.js"></script>
-    <script src="js/components/Groups.js"></script>
-    <script src="js/components/Chat.js"></script>
-    <script src="js/components/Call.js"></script>
-    <script src="js/components/Profile.js"></script>
-    <script src="js/app.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/services/WebSocketService.js"></script>
+    <script src="/js/services/WebRTCService.js"></script>
+    <script src="/js/services/AuthService.js"></script>
+    <script src="/js/services/GroupService.js"></script>
+    <script src="/js/services/ChatService.js"></script>
+    <script src="/js/services/MiningPoolService.js"></script>
+    <script src="/js/components/Groups.js"></script>
+    <script src="/js/components/Chat.js"></script>
+    <script src="/js/components/Call.js"></script>
+    <script src="/js/components/Profile.js"></script>
+    <script src="/js/components/Mining.js"></script>
+    <script src="/js/app.js"></script>
 </body>
 </html> 

@@ -1,0 +1,30 @@
+{
+  "name": "PilotCursor",
+  "displayName": "Pilot Cursor",
+  "description": "A VS Code extension that enhances cursor functionality.",
+  "version": "0.1.0",
+  "publisher": "your-publisher-name",
+  "engines": {
+    "vscode": "^1.50.0"
+  },
+  "activationEvents": [
+    "onCommand:pilotCursor.start"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "pilotCursor.start",
+        "title": "Start Pilot Cursor"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "echo 'No compilation step required'",
+    "test": "echo 'No tests specified'"
+  },
+  "devDependencies": {
+    "vscode": "^1.50.0"
+  }
+}

@@ -1,5 +1,12 @@
 # TaskTaxi.Co Documentation
 
+## Navigation
+- [Main Documentation](../README.md)
+- [Lightning Network Integration](../docs/LIGHTNING.md)
+- [Continuum Documentation](../README_Continuum.md)
+- [Position System & VR Guide](../README2.md)
+- [Development Guide](../README3.md)
+
 <img src="src/assets/images/circle-app-logo.png" alt="Circle App Logo" width="100">
 
 This guide provides detailed information about the TaskTaxi.Co feature in Circle v3.0.0.
