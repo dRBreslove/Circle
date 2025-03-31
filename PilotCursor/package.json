@@ -1,14 +1,20 @@
 {
   "name": "PilotCursor",
   "displayName": "Pilot Cursor",
-  "description": "A VS Code extension that enhances cursor functionality.",
+  "description": "A VS Code extension that bridges GitHub Copilot with Cursor IDE",
   "version": "0.1.0",
   "publisher": "your-publisher-name",
   "engines": {
     "vscode": "^1.50.0"
   },
   "activationEvents": [
-    "onCommand:pilotCursor.start"
+    "onCommand:pilotCursor.start",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:python",
+    "onLanguage:java",
+    "onLanguage:csharp",
+    "onLanguage:cpp"
   ],
   "main": "./src/extension.js",
   "contributes": {
@@ -16,13 +22,31 @@
       {
         "command": "pilotCursor.start",
         "title": "Start Pilot Cursor"
+      },
+      {
+        "command": "pilotCursor.toggleCopilot",
+        "title": "Toggle GitHub Copilot"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Pilot Cursor",
+      "properties": {
+        "pilotCursor.copilotEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable GitHub Copilot integration"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "echo 'No compilation step required'",
     "test": "echo 'No tests specified'"
+  },
+  "dependencies": {
+    "@githubnext/github-copilot-cli": "^0.1.0",
+    "ws": "^8.13.0"
   },
   "devDependencies": {
     "vscode": "^1.50.0"

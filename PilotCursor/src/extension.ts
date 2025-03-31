@@ -1,12 +1,14 @@
-const vscode = require('vscode');
-const WebSocket = require('ws');
-const { spawn } = require('child_process');
-const path = require('path');
+import * as vscode from 'vscode';
+import * as WebSocket from 'ws';
+import { spawn } from 'child_process';
+import * as path from 'path';
 
 class CopilotBridge {
-    constructor(context) {
-        this.ws = null;
-        this.copilotProcess = null;
+    private ws: WebSocket | null = null;
+    private copilotProcess: any = null;
+    private context: vscode.ExtensionContext;
+
+    constructor(context: vscode.ExtensionContext) {
         this.context = context;
     }
 
@@ -32,7 +34,7 @@ class CopilotBridge {
             });
 
             // Handle Copilot process output
-            this.copilotProcess.stdout.on('data', (data) => {
+            this.copilotProcess.stdout.on('data', (data: Buffer) => {
                 const suggestions = this.parseCopilotOutput(data.toString());
                 if (this.ws && this.ws.readyState === WebSocket.OPEN) {
                     this.ws.send(JSON.stringify({
@@ -47,7 +49,7 @@ class CopilotBridge {
         }
     }
 
-    setupEventListeners() {
+    private setupEventListeners() {
         // Listen for editor changes
         vscode.workspace.onDidChangeTextDocument(event => {
             if (this.ws && this.ws.readyState === WebSocket.OPEN) {
@@ -74,7 +76,7 @@ class CopilotBridge {
         });
     }
 
-    parseCopilotOutput(output) {
+    private parseCopilotOutput(output: string): any {
         try {
             return JSON.parse(output);
         } catch {
@@ -94,7 +96,7 @@ class CopilotBridge {
     }
 }
 
-function activate(context) {
+export function activate(context: vscode.ExtensionContext) {
     const bridge = new CopilotBridge(context);
     
     let startCommand = vscode.commands.registerCommand('pilotCursor.start', () => {
@@ -111,11 +113,6 @@ function activate(context) {
     context.subscriptions.push(startCommand, toggleCommand);
 }
 
-function deactivate() {
+export function deactivate() {
     // Cleanup will be handled by the bridge instance
-}
-
-module.exports = {
-    activate,
-    deactivate
-};
+} 
