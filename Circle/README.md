@@ -94,12 +94,12 @@ Circle/                    # Root directory
 
 ## Documentation
 
-- [Security Audit Report](Circle/README_SecurityAudit.md)
-- [Development Guide](Circle/README3.md)
-- [Position System & VR Guide](Circle/README2.md)
-- [TaskTaxi.Co Documentation](Circle/README4.md)
-- [Continuum Documentation](Circle/README_Continuum.md)
-- [Lightning Network Integration](Circle/docs/LIGHTNING.md)
+- [Security Audit Report](./README_SecurityAudit.md)
+- [Development Guide](./README3.md)
+- [Position System & VR Guide](./README2.md)
+- [TaskTaxi.Co Documentation](./README4.md)
+- [Continuum Documentation](./README_Continuum.md)
+- [Lightning Network Integration](./docs/LIGHTNING.md)
 
 ## Contributing
 
@@ -111,7 +111,7 @@ Circle/                    # Root directory
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](Circle/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
 
 ## Acknowledgments
 
