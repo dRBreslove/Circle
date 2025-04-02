@@ -2,6 +2,6 @@
 jest.mock('react-native-reanimated', () => ({
   default: {
     call: () => {},
-    createAnimatedComponent: (component) => component,
+    createAnimatedComponent: component => component,
   },
-})); 
+}));

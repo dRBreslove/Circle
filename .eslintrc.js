@@ -1,29 +1,28 @@
 module.exports = {
   env: {
     browser: true,
+    es2021: true,
     node: true,
-    'react-native/react-native': true
+    jest: true,
+    'react-native/react-native': true,
   },
   extends: [
-    'eslint:recommended',
-    'plugin:react/recommended',
+    'airbnb',
+    'airbnb/hooks',
     'plugin:react-native/all',
-    '@react-native-community',
-    'plugin:@typescript-eslint/recommended',
-    'prettier'
+    'plugin:prettier/recommended',
   ],
-  parser: '@typescript-eslint/parser',
   parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
     ecmaFeatures: {
-      jsx: true
+      jsx: true,
     },
-    ecmaVersion: 2021,
-    sourceType: 'module'
   },
   plugins: [
     'react',
     'react-native',
-    '@typescript-eslint'
+    'prettier',
   ],
   globals: {
     Float32Array: 'readonly',
@@ -41,36 +40,36 @@ module.exports = {
     setRecordingStartTime: 'writable',
     setRecordingTimer: 'writable',
     renderErrorDetails: 'writable',
-    isSharingLocation: 'writable'
+    isSharingLocation: 'writable',
   },
   rules: {
-    'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': ['error', {
-      argsIgnorePattern: '^_',
-      varsIgnorePattern: '^React$'
-    }],
-    'no-console': ['error', { allow: ['warn', 'error'] }],
+    'import/no-commonjs': 'off',
+    'no-console': 'off',
+    'react/jsx-filename-extension': [1, { extensions: ['.js', '.jsx', '.ts', '.tsx'] }],
     'react/prop-types': 'off',
-    'react/display-name': 'off',
-    'react-native/no-color-literals': 'error',
-    'react-native/no-inline-styles': 'error',
+    'import/prefer-default-export': 'off',
+    'import/extensions': [
+      'error',
+      'ignorePackages',
+      {
+        js: 'always',
+        jsx: 'always',
+        ts: 'always',
+        tsx: 'always',
+      },
+    ],
+    'react-native/no-raw-text': 2,
+    'react-native/no-inline-styles': 2,
+    'react-native/no-color-literals': 2,
     'react-native/no-unused-styles': 'error',
     'react-native/split-platform-components': 'error',
-    'react-native/no-raw-text': 'off',
     'react-native/no-single-element-style-arrays': 'error',
-    'import/no-unresolved': 'off',
-    'import/extensions': 'off'
   },
-  overrides: [
-    {
-      files: ['*.js', '*.jsx'],
-      rules: {
-        '@typescript-eslint/no-unused-vars': 'off',
-        'no-unused-vars': ['error', {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^React$'
-        }]
-      }
-    }
-  ]
+  settings: {
+    'import/resolver': {
+      node: {
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      },
+    },
+  },
 };
