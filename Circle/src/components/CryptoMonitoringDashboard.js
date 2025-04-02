@@ -402,15 +402,15 @@ const CryptoMonitoringDashboard = () => {
           <View key={currency} style={styles.metricCard}>
             <Text style={styles.currencyTitle}>{currency}</Text>
             <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>Transactions:</Text>
+              <Text style={styles.metricLabelText}>Transactions:</Text>
               <Text style={styles.metricValue}>{data.count}</Text>
             </View>
             <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>Volume:</Text>
+              <Text style={styles.metricLabelText}>Volume:</Text>
               <Text style={styles.metricValue}>{formatCurrency(data.volume)}</Text>
             </View>
             <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>Success Rate:</Text>
+              <Text style={styles.metricLabelText}>Success Rate:</Text>
               <Text style={styles.metricValue}>
                 {((data.successRate / data.count) * 100).toFixed(1)}%
               </Text>
@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 4,
   },
-  metricLabel: {
+  metricLabelText: {
     fontSize: 14,
     color: '#666',
   },

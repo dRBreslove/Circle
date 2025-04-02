@@ -79,7 +79,7 @@ class VRDService {
     };
   }
 
-  handleAccelerometerData = ({ x, y, z }) => {
+  handleAccelerometerData({ x, y, z }) {
     const now = Date.now();
     const deltaTime = (now - this.lastUpdate) / 1000; // Convert to seconds
     this.lastUpdate = now;
@@ -172,7 +172,7 @@ class VRDService {
         });
       }
     }
-  };
+  }
 
   detectGesture() {
     const speed = Math.sqrt(

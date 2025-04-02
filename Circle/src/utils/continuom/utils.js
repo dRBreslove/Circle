@@ -1,4 +1,4 @@
-import { GRID_SIZE, POSITION_COLORS, SYNC_POINT } from './constants';
+import { GRID_SIZE, POSITION_COLORS, SYNC_POINT, SYNC_DISTANCE } from './constants';
 
 export const parsePositionName = (name) => {
   const [side, direction, vertical] = name.split('');

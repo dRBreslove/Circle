@@ -653,7 +653,7 @@ export default function PosSysScreen() {
       <View style={styles.section}>
         <Text style={styles.title}>Position System</Text>
         
-        <View style={styles.infoContainer}>
+        <View style={styles.infoContainerSection}>
           <Text style={styles.label}>Device Location:</Text>
           <Text style={styles.value}>
             {deviceLocation ? 
@@ -663,7 +663,7 @@ export default function PosSysScreen() {
           </Text>
         </View>
 
-        <View style={styles.infoContainer}>
+        <View style={styles.infoContainerSection}>
           <Text style={styles.label}>Device Orientation:</Text>
           <Text style={styles.value}>
             X: {orientation.x.toFixed(2)}, 
@@ -672,12 +672,12 @@ export default function PosSysScreen() {
           </Text>
         </View>
 
-        <View style={styles.infoContainer}>
+        <View style={styles.infoContainerSection}>
           <Text style={styles.label}>Zoom Level:</Text>
           <Text style={styles.value}>{zoomLevel.toFixed(2)}x</Text>
         </View>
 
-        <View style={styles.infoContainer}>
+        <View style={styles.infoContainerSection}>
           <Text style={styles.label}>Camera Points:</Text>
           <Text style={styles.value}>{cameraPoints.length} points recorded</Text>
         </View>
@@ -899,7 +899,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  infoContainer: {
+  infoContainerSection: {
     marginBottom: 15,
   },
   label: {

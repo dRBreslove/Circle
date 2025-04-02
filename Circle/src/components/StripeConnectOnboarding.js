@@ -59,7 +59,7 @@ const StripeConnectOnboarding = ({ userId, userData, onComplete }) => {
 
       <View style={styles.content}>
         <Text style={styles.description}>
-          We use Stripe to process payments securely. You'll need to:
+          We use Stripe to process payments securely. You&apos;ll need to:
         </Text>
         <View style={styles.steps}>
           <View style={styles.step}>

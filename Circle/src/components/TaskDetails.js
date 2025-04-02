@@ -59,7 +59,7 @@ const TaskDetails = ({ task, onAcceptTask, onCompleteTask, onCancelTask }) => {
 
   const renderActionButton = () => {
     switch (task.status) {
-      case 'pending':
+      case 'available':
         return (
           <TouchableOpacity
             style={[styles.actionButton, styles.acceptButton]}
@@ -68,7 +68,6 @@ const TaskDetails = ({ task, onAcceptTask, onCompleteTask, onCancelTask }) => {
             <Text style={styles.actionButtonText}>Accept Task</Text>
           </TouchableOpacity>
         );
-      case 'assigned':
       case 'in_progress':
         return (
           <TouchableOpacity
@@ -80,7 +79,6 @@ const TaskDetails = ({ task, onAcceptTask, onCompleteTask, onCancelTask }) => {
         );
       case 'pending':
       case 'assigned':
-      case 'in_progress':
         return (
           <TouchableOpacity
             style={[styles.actionButton, styles.cancelButton]}
